@@ -14,6 +14,20 @@ else {
     return;
 }
 
+const capitalizeString = function(string) {
+    let words = string.split(' ');
+
+    string = '';
+
+    words.forEach(word => {
+        if(word.length > 0) {
+            string += word[0].toUpperCase() + word.substr(1, word.length - 1).toLowerCase() + ' ';
+        }
+    });
+
+    return string;
+};
+
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
     client.user.setActivity(`${settings.commandPrefix}k <kenteken>`);
@@ -36,7 +50,6 @@ client.on('message', msg => {
         console.log(kenteken);
 
         if (msg.content.length <= (settings.commandPrefix.length + 10) && kentekenRegex.test(kenteken)) {
-            //msg.channel.send("Huts dat is een geldig kenteken, nu nog iets er mee doen.....");
 
             let requestOptions = {
                 headers: {
@@ -61,9 +74,60 @@ client.on('message', msg => {
 
                     vehicleInfo = vehicleInfo[0];
 
-                    console.log(vehicleInfo);
+                    vehicleInfo.handelsbenaming = vehicleInfo.handelsbenaming.replace(vehicleInfo.merk, '');
 
-                    msg.channel.send(`Dat is een ${vehicleInfo.merk} ${vehicleInfo.handelsbenaming} (${vehicleInfo.eerste_kleur})`);
+                    let prijs = '';
+
+                    if(typeof vehicleInfo.catalogusprijs !== 'undefined') {
+
+                        let prijstext = '';
+
+                        if(vehicleInfo.catalogusprijs < 20000) {
+                            prijstext = ' Wat een kutbak, die was maar '
+                        }
+                        else if(vehicleInfo.catalogusprijs > 20000 && vehicleInfo.catalogusprijs < 50000) {
+                            prijstext = ' hm ok, die kostte ';
+                        }
+                        else if(vehicleInfo.catalogusprijs > 50000 && vehicleInfo.catalogusprijs < 150000) {
+                            prijstext = ' Wauw die kostte wel ';
+                        }
+                        else {
+                            prijstext = ' Holymoly wat een bak, die was ';
+                        }
+
+                        if(kenteken == '23RZXJ') {
+                            prijstext = 'DAMNNNNNN BOIIIIII SKRRT ';
+                        }
+
+                        vehicleInfo.catalogusprijs = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(vehicleInfo.catalogusprijs);
+                    
+                        vehicleInfo.catalogusprijs = vehicleInfo.catalogusprijs.replace('.00','').replace(',','.').replace(',','.').replace(',','.').replace(',','.');
+
+                        prijs = ` ${prijstext}${vehicleInfo.catalogusprijs}`;
+                    }
+
+                    https.get(`https://opendata.rdw.nl/resource/8ys7-d773.json?kenteken=${kenteken}`, requestOptions, (response) => {
+                        let data = '';
+
+                        response.on('data', (chunk) => {
+                            data += chunk;
+                        });
+
+                        response.on('end', () => {
+                            let brandstofInfo = JSON.parse(data);
+
+                            if(brandstofInfo.length !== 0) {
+                                brandstofInfo = brandstofInfo[0];
+
+                                let pk = Math.round(brandstofInfo.nettomaximumvermogen * 1.362);
+
+                                msg.channel.send(`Dat is een ${capitalizeString(vehicleInfo.merk)}${capitalizeString(vehicleInfo.handelsbenaming)}(${pk} pk)${prijs}`);
+                            }
+                            else {
+                                msg.channel.send(`Dat is een ${capitalizeString(vehicleInfo.merk)}${capitalizeString(vehicleInfo.handelsbenaming)}(${vehicleInfo.eerste_kleur})${prijs}`);
+                            }
+                        });
+                    });
                 });
             });
         }
