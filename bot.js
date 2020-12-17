@@ -3,6 +3,8 @@ const client = new Discord.Client();
 const fs = require('fs');
 const https = require('https');
 
+const logger = require('./logger');
+
 let settings = {};
 
 // load settings
@@ -47,8 +49,6 @@ client.on('message', msg => {
 
         let kenteken = msg.content.substr(settings.commandPrefix.length + 2).toUpperCase().split('-').join('');
 
-        console.log(kenteken);
-
         if (msg.content.length <= (settings.commandPrefix.length + 10) && kentekenRegex.test(kenteken)) {
 
             let requestOptions = {
@@ -68,6 +68,8 @@ client.on('message', msg => {
                     let vehicleInfo = JSON.parse(data);
 
                     if(vehicleInfo.length === 0) {
+                        logger(msg, 'fail');
+
                         msg.channel.send('Ik kon dat kenteken niet vindn kerol.');
                         return;
                     }
@@ -110,6 +112,8 @@ client.on('message', msg => {
                                     .setDescription(`${capitalizeString(vehicleInfo.eerste_kleur)} - ${pk} pk - ${vehicleInfo.catalogusprijs} - ${bouwjaar}`)
                                     .setFooter(kenteken);
 
+                                    logger(msg, 'success');
+
                                 return msg.channel.send(embed);
                             }
                         });
@@ -118,6 +122,8 @@ client.on('message', msg => {
             });
         }
         else {
+            logger(msg, 'fail');
+
             return msg.channel.send("Dat is geen geldig kenteken!! snap jy het wel").then(message => message.delete({timeout: 10000})).catch(console.error);
         }
         
