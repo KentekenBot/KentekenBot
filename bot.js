@@ -76,35 +76,7 @@ client.on('message', msg => {
 
                     vehicleInfo.handelsbenaming = vehicleInfo.handelsbenaming.replace(vehicleInfo.merk, '');
 
-                    let prijs = '';
-
-                    if(typeof vehicleInfo.catalogusprijs !== 'undefined') {
-
-                        let prijstext = '';
-
-                        if(vehicleInfo.catalogusprijs < 20000) {
-                            prijstext = ' Wat een kutbak, die was maar '
-                        }
-                        else if(vehicleInfo.catalogusprijs > 20000 && vehicleInfo.catalogusprijs < 50000) {
-                            prijstext = ' hm ok, die kostte ';
-                        }
-                        else if(vehicleInfo.catalogusprijs > 50000 && vehicleInfo.catalogusprijs < 150000) {
-                            prijstext = ' Wauw die kostte wel ';
-                        }
-                        else {
-                            prijstext = ' Holymoly wat een bak, die was ';
-                        }
-
-                        if(kenteken == '23RZXJ') {
-                            prijstext = 'DAMNNNNNN BOIIIIII SKRRT ';
-                        }
-
-                        vehicleInfo.catalogusprijs = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(vehicleInfo.catalogusprijs);
-                    
-                        vehicleInfo.catalogusprijs = vehicleInfo.catalogusprijs.replace('.00','').replace(',','.').replace(',','.').replace(',','.').replace(',','.');
-
-                        prijs = ` ${prijstext}${vehicleInfo.catalogusprijs}`;
-                    }
+                    let bouwjaar = vehicleInfo.datum_eerste_toelating.substr(0, 4);
 
                     https.get(`https://opendata.rdw.nl/resource/8ys7-d773.json?kenteken=${kenteken}`, requestOptions, (response) => {
                         let data = '';
@@ -121,10 +93,24 @@ client.on('message', msg => {
 
                                 let pk = Math.round(brandstofInfo.nettomaximumvermogen * 1.362);
 
-                                msg.channel.send(`Dat is een ${capitalizeString(vehicleInfo.merk)}${capitalizeString(vehicleInfo.handelsbenaming)}(${pk} pk)${prijs}`);
-                            }
-                            else {
-                                msg.channel.send(`Dat is een ${capitalizeString(vehicleInfo.merk)}${capitalizeString(vehicleInfo.handelsbenaming)}(${vehicleInfo.eerste_kleur})${prijs}`);
+                                if(isNaN(pk)) {
+                                    pk = 'Onbekend';
+                                }
+
+                                if(typeof vehicleInfo.catalogusprijs === 'undefined') {
+                                    vehicleInfo.catalogusprijs = 'Onbekende catalogusprijs';
+                                }
+                                else {
+                                    vehicleInfo.catalogusprijs = "€" + vehicleInfo.catalogusprijs;
+                                }
+
+                                let embed = new Discord.MessageEmbed()
+                                    .setTitle(`${capitalizeString(vehicleInfo.merk)}${capitalizeString(vehicleInfo.handelsbenaming)}`)
+                                    .setURL(`https://kentekencheck.nl/kenteken?i=${kenteken}`)
+                                    .setDescription(`${capitalizeString(vehicleInfo.eerste_kleur)} - ${pk} pk - ${vehicleInfo.catalogusprijs} - ${bouwjaar}`)
+                                    .setFooter(kenteken);
+
+                                return msg.channel.send(embed);
                             }
                         });
                     });
@@ -132,7 +118,7 @@ client.on('message', msg => {
             });
         }
         else {
-            msg.channel.send("Dat is geen geldig kenteken!! snap jy het wel").then(message => message.delete({timeout: 10000})).catch(console.error);
+            return msg.channel.send("Dat is geen geldig kenteken!! snap jy het wel").then(message => message.delete({timeout: 10000})).catch(console.error);
         }
         
     }
