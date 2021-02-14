@@ -1,7 +1,9 @@
+const { time } = require('console');
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const fs = require('fs');
 const https = require('https');
+const sqlite3 = require('sqlite3').verbose();
 
 const logger = require('./logger');
 
@@ -15,6 +17,9 @@ else {
     console.error('Settings file does not exist or is not accessible, exiting....\n');
     return;
 }
+
+var db = new sqlite3.Database('kentekenbot.db');
+db.run("CREATE TABLE IF NOT EXISTS sightings (license_plate TEXT NOT NULL, discord_user_id TEXT NOT NULL, date_time TEXT NOT NULL UNIQUE);");
 
 const capitalizeString = function(string) {
     let words = string.split(' ');
@@ -59,6 +64,26 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
 
     
 });
+
+function timeSince(timeStamp) {
+    var now = new Date(),
+      secondsPast = (now.getTime() - timeStamp) / 1000;
+    if (secondsPast < 60) {
+      return parseInt(secondsPast) + ' seconden geleden';
+    }
+    if (secondsPast < 3600) {
+      return parseInt(secondsPast / 60) + ' minuten geleden';
+    }
+    if (secondsPast <= 86400) {
+      return parseInt(secondsPast / 3600) + ' uur geleden';
+    }
+    if (secondsPast > 86400) {
+        day = timeStamp.getDate();
+        month = timeStamp.toDateString().match(/ [a-zA-Z]*/)[0].replace(" ", "");
+        year = timeStamp.getFullYear() == now.getFullYear() ? "" : " " + timeStamp.getFullYear();
+        return day + " " + month + year;
+    }
+}
 
 client.on('message', msg => {
     if(msg.author.bot) {
@@ -130,16 +155,38 @@ client.on('message', msg => {
                                 else {
                                     vehicleInfo.catalogusprijs = "€" + vehicleInfo.catalogusprijs;
                                 }
-
+                                
                                 let embed = new Discord.MessageEmbed()
                                     .setTitle(`${capitalizeString(vehicleInfo.merk)}${capitalizeString(vehicleInfo.handelsbenaming)}`)
                                     .setURL(`https://kentekencheck.nl/kenteken?i=${kenteken}`)
                                     .setDescription(`${capitalizeString(vehicleInfo.eerste_kleur)} - ${pk} pk - ${vehicleInfo.catalogusprijs} - ${bouwjaar}`)
                                     .setFooter(kenteken);
+                                
+                                var sightings = "";
+                                db.all("SELECT * FROM sightings WHERE license_plate = ? COLLATE NOCASE", [kenteken], (err, rows) => {
+                                    if (err) {
+                                        logger(msg, 'dbfail');
+                                    }
+
+                                    rows.forEach((row) => {
+                                        var date = new Date(parseInt(row.date_time));
+                                        var timeDesc = timeSince(date);
+                                        var newSighting = `<@${row.discord_user_id}> - ${timeDesc}\n`;
+                                        sightings = sightings + newSighting;
+                                    });
+
+                                    if(sightings.length > 0)
+                                    {
+                                        embed.addField("Eerder gespot door", sightings);
+                                    }
+
+                                    var stmt = db.prepare("INSERT INTO sightings VALUES (?, ?, ?)");
+                                    stmt.run(kenteken, msg.author.id, new Date().getTime());
+                                    stmt.finalize();
 
                                     logger(msg, 'success');
-
-                                return msg.channel.send(embed);
+                                    return msg.channel.send(embed);
+                                })
                             }
                         });
                     });
@@ -154,5 +201,7 @@ client.on('message', msg => {
         
     }
 });
+
+
 
 client.login(settings.token);
