@@ -35,6 +35,31 @@ client.on('ready', () => {
     client.user.setActivity(`${settings.commandPrefix}k <kenteken>`);
 });
 
+client.ws.on('INTERACTION_CREATE', async interaction => {
+    //console.log(interaction);
+
+    if(interaction.data.name === 'gelezen') {
+        client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+            type: 4,
+            data: {
+                content: '<:gelezen:431784269703020547>'
+                }
+            }
+        });
+    }
+    else {
+        client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+            type: 4,
+            data: {
+                content: '.'
+                }
+            }
+        });
+    }
+
+    
+});
+
 client.on('message', msg => {
     if(msg.author.bot) {
         return;
