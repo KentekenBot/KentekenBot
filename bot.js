@@ -163,7 +163,7 @@ client.on('message', msg => {
                                     .setFooter(kenteken);
                                 
                                 var sightings = "";
-                                db.all("SELECT * FROM sightings WHERE license_plate = ? COLLATE NOCASE", [kenteken], (err, rows) => {
+                                db.all("SELECT * FROM sightings WHERE license_plate = ? COLLATE NOCASE ORDER BY date_time DESC LIMIT 10", [kenteken], (err, rows) => {
                                     if (err) {
                                         logger(msg, 'dbfail');
                                     }
