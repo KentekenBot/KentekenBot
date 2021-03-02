@@ -163,17 +163,24 @@ client.on('message', msg => {
                                     .setFooter(kenteken);
                                 
                                 var sightings = "";
-                                db.all("SELECT * FROM sightings WHERE license_plate = ? COLLATE NOCASE ORDER BY date_time DESC LIMIT 10", [kenteken], (err, rows) => {
+                                db.all("SELECT *, (SELECT COUNT(*) FROM sightings WHERE   license_plate = ? COLLATE NOCASE) AS count FROM sightings WHERE license_plate = ? COLLATE NOCASE ORDER BY date_time DESC LIMIT 10", [kenteken, kenteken], (err, rows) => {
                                     if (err) {
                                         logger(msg, 'dbfail');
                                     }
+
+                                    var sightingcount = 0;
 
                                     rows.forEach((row) => {
                                         var date = new Date(parseInt(row.date_time));
                                         var timeDesc = timeSince(date);
                                         var newSighting = `<@${row.discord_user_id}> - ${timeDesc}\n`;
+                                        sightingcount = row.count;
                                         sightings = sightings + newSighting;
                                     });
+
+                                    if(rows.length == 10 && sightingcount > 10) {
+                                        sightings += `En ${sightingcount - 10} andere ${(sightingcount - 10) == 1 ? "keer" : "keren"} gespot.`;
+                                    }
 
                                     if(sightings.length > 0)
                                     {
