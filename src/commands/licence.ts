@@ -3,6 +3,7 @@ import { BaseCommand } from "./base-command";
 import { OpenRdw } from "../services/open-rdw";
 import { VehicleInfo } from "../models/vehicleInfo";
 import { Str } from "../util/str";
+import { MessageEmbed } from "discord.js";
 
 export class Licence extends BaseCommand implements ICommand {
     public async handle(): Promise<void> {
@@ -21,6 +22,11 @@ export class Licence extends BaseCommand implements ICommand {
 
         const vehicle = await VehicleInfo.get(licence)
 
-        this.reply(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`);
+        const response = new MessageEmbed()
+            .setTitle(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`)
+            .setURL(`https://kentekencheck.nl/kenteken?i=${licence}`)
+            .setFooter(licence);
+
+        this.reply(response);
     }
 }

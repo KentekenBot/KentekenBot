@@ -1,4 +1,4 @@
-import { Client, Message } from "discord.js";
+import { APIMessageContentResolvable, Client, Message, MessageAdditions, MessageOptions } from "discord.js";
 import { Settings } from "../services/settings";
 import { AvailableSettings } from "../enums/available-settings";
 
@@ -18,7 +18,7 @@ export abstract class BaseCommand {
         return data;
     }
 
-    protected reply(message: string): void {
+    protected reply(message: APIMessageContentResolvable | (MessageOptions & { split?: false }) | MessageAdditions): void {
         this.message.channel.send(message);
     }
 }
