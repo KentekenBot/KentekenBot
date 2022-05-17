@@ -1,9 +1,10 @@
 import { ICommand } from "../interfaces/command";
 import { BaseCommand } from "./base-command";
-import { OpenRdw } from "../services/open-rdw";
 import { VehicleInfo } from "../models/vehicleInfo";
 import { Str } from "../util/str";
 import { MessageEmbed } from "discord.js";
+import { Sightings } from "../services/sightings";
+import { DateTime } from "../util/date-time";
 
 export class Licence extends BaseCommand implements ICommand {
     public async handle(): Promise<void> {
@@ -22,10 +23,32 @@ export class Licence extends BaseCommand implements ICommand {
 
         const vehicle = await VehicleInfo.get(licence)
 
+
         const response = new MessageEmbed()
             .setTitle(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`)
             .setURL(`https://kentekencheck.nl/kenteken?i=${licence}`)
             .setFooter(licence);
+
+
+        const sightingData = await Sightings.get(licence);
+        if (sightingData.length) {
+            const sightings = []
+            const sightingCount = sightingData[0].count as number
+
+            sightingData.forEach((sighting) => {
+                const dateTime = sighting.date_time;
+                const sightingAt = DateTime.timeSince(new Date(parseInt(dateTime as string)))
+                sightings.push(`<@${sighting.discord_user_id}> - ${sightingAt}`);
+            });
+
+            if (sightingData.length == 10 && sightingCount > 10) {
+                sightings.push(`En ${sightingCount - 10} andere ${(sightingCount - 10) == 1 ? "keer" : "keren"} gespot.`);
+            }
+
+            response.addField('Eerder gespot door', sightings.join('\n'))
+        }
+
+        Sightings.insert(licence, this.message.author.id)
 
         this.reply(response);
     }
