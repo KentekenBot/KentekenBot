@@ -27,6 +27,7 @@ export class Licence extends BaseCommand implements ICommand {
         const response = new MessageEmbed()
             .setTitle(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`)
             .setURL(`https://kentekencheck.nl/kenteken?i=${licence}`)
+            .setDescription(`${Str.capitalizeWords(vehicle.eerste_kleur)} - ${vehicle.getConstructionYear()}`)
             .setFooter(licence);
 
 

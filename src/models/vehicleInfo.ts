@@ -56,4 +56,8 @@ export class VehicleInfo {
 
         return new VehicleInfo(data);
     }
+
+    public getConstructionYear(): string {
+        return this.datum_eerste_toelating.substr(0, 4);
+    }
 }

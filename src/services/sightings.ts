@@ -26,7 +26,7 @@ export class Sightings {
     }
 
     private static getDb(): Database {
-        const db =  new Database(__dirname + '/../../kentenbot.db');
+        const db =  new Database(__dirname + '/../../kentekenbot.db');
         this.ensureTableExists(db);
 
         return db;
