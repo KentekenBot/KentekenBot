@@ -1,11 +1,12 @@
 import { Database } from 'sqlite3';
 import { DateTime } from '../util/date-time';
 import fs from 'fs';
+import { Sighting } from '../types/sighting';
 
 export class Sightings {
     private static db: Database;
 
-    public static get(licence: string): Promise<Record<string, unknown>[]> {
+    public static get(licence: string): Promise<Sighting[]> {
         if (!this.db) {
             this.db = this.getDb();
         }
@@ -30,12 +31,11 @@ export class Sightings {
 
         if (sightingData.length) {
             const sightings = [];
-            const sightingCount = sightingData[0].count as number;
+            const sightingCount = sightingData[0].count;
 
             sightingData.forEach((sighting) => {
-                const dateTime = sighting.date_time;
-                const sightingAt = DateTime.timeSince(new Date(parseInt(dateTime as string)));
-                sightings.push(`<@${sighting.discord_user_id}> - ${sightingAt}`);
+                const timestamp = DateTime.getDiscordTimestamp(sighting.date_time);
+                sightings.push(`<@${sighting.discord_user_id}> - ${timestamp}`);
             });
 
             if (sightingData.length == 10 && sightingCount > 10) {
