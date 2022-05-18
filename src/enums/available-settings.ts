@@ -1,5 +1,5 @@
 export enum AvailableSettings {
     TOKEN = 'token',
     COMMAND_PREFIX = 'commandPrefix',
-    OPEN_DATE_TOKEN = 'openDataToken',
+    OPEN_DATA_TOKEN = 'openDataToken',
 }
