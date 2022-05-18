@@ -3,11 +3,11 @@ import { Settings } from './settings';
 import { AvailableSettings } from '../enums/available-settings';
 
 export class OpenRdw {
-    public async getVehicleInfo(licence: string): Promise<Record<string, unknown> | undefined> {
-        return await this.makeRequest(`m9d7-ebf2.json?kenteken=${licence}`);
+    public async getVehicleInfo(license: string): Promise<Record<string, unknown> | undefined> {
+        return await this.makeRequest(`m9d7-ebf2.json?kenteken=${license}`);
     }
-    public async getFuelInfo(licence: string): Promise<Record<string, unknown>> {
-        return await this.makeRequest(`8ys7-d773.json?kenteken=${licence}`);
+    public async getFuelInfo(license: string): Promise<Record<string, unknown>> {
+        return await this.makeRequest(`8ys7-d773.json?kenteken=${license}`);
     }
 
     private async makeRequest(endpoint: string): Promise<Record<string, unknown>> {

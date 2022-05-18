@@ -9,9 +9,9 @@ export class FuelInfo extends BaseModel {
         this.hydrate(data);
     }
 
-    public static async get(licence: string): Promise<FuelInfo> {
+    public static async get(license: string): Promise<FuelInfo> {
         const rdw = new OpenRdw();
-        const data = await rdw.getFuelInfo(licence);
+        const data = await rdw.getFuelInfo(license);
 
         return new FuelInfo(data);
     }

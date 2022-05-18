@@ -6,28 +6,28 @@ import { MessageEmbed } from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
 
-export class Licence extends BaseCommand implements ICommand {
+export class License extends BaseCommand implements ICommand {
     public async handle(): Promise<void> {
         const input = this.getArguments()[0];
         if (!input) {
             return;
         }
 
-        const licence = input.toUpperCase().split('-').join('');
+        const license = input.toUpperCase().split('-').join('');
 
-        if (!this.getLicenceRegex().test(licence)) {
+        if (!this.getLicenseRegex().test(license)) {
             this.reply('Dat is geen kenteken kut');
             return;
         }
 
-        const vehicle = await VehicleInfo.get(licence);
+        const vehicle = await VehicleInfo.get(license);
         if (!vehicle) {
             this.reply('Ik kon dat kenteken niet vindn kerol');
-            Sightings.insert(licence, this.message.author.id);
+            Sightings.insert(license, this.message.author.id);
             return;
         }
 
-        const fuelInfo = await FuelInfo.get(licence);
+        const fuelInfo = await FuelInfo.get(license);
 
         const description = [
             Str.capitalizeWords(vehicle.eerste_kleur),
@@ -38,21 +38,20 @@ export class Licence extends BaseCommand implements ICommand {
 
         const response = new MessageEmbed()
             .setTitle(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`)
-            .setURL(`https://kentekencheck.nl/kenteken?i=${licence}`)
+            .setURL(`https://kentekencheck.nl/kenteken?i=${license}`)
             .setDescription(description.join(' - '))
-            .setFooter(licence);
+            .setFooter(license);
 
-        const sightings = await Sightings.list(licence);
+        const sightings = await Sightings.list(license);
         if (sightings) {
             response.addField('Eerder gespot door', sightings);
         }
-
-        Sightings.insert(licence, this.message.author.id);
+        Sightings.insert(license, this.message.author.id);
 
         this.reply(response);
     }
 
-    private getLicenceRegex(): RegExp {
+    private getLicenseRegex(): RegExp {
         return /^(([A-Z0-9]{2}-?[A-Z0-9]{2}-?[A-Z0-9]{2})|([0-9]{2}-?[A-Z]{3}-?[0-9])|([0-9]-?[A-Z]{3}-?[0-9]{2})|([A-Z]-?\d{3}-?[A-Z]{2})|([A-Z]{2}-?[0-9]{3}-?[A-Z]))$/;
     }
 }

@@ -3,7 +3,7 @@ import { Settings } from './services/settings';
 import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
 import { ICommand } from './interfaces/command';
-import { Licence } from './commands/licence';
+import { License } from './commands/license';
 import { Ping } from './commands/ping';
 
 export class Bot {
@@ -31,7 +31,7 @@ export class Bot {
 
     private getCommands(): Record<string, Constructable<ICommand>> {
         return {
-            k: Licence,
+            k: License,
             ping: Ping,
         };
     }

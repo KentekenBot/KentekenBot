@@ -6,7 +6,7 @@ import { Sighting } from '../types/sighting';
 export class Sightings {
     private static db: Database;
 
-    public static get(licence: string): Promise<Sighting[]> {
+    public static get(license: string): Promise<Sighting[]> {
         if (!this.db) {
             this.db = this.getDb();
         }
@@ -14,7 +14,7 @@ export class Sightings {
         return new Promise((resolve, reject) => {
             this.db.all(
                 'SELECT *, (SELECT COUNT(*) FROM sightings WHERE license_plate = ? COLLATE NOCASE) AS count FROM sightings WHERE license_plate = ? COLLATE NOCASE ORDER BY date_time DESC LIMIT 10',
-                [licence, licence],
+                [license, license],
                 (err, rows) => {
                     if (err) {
                         reject(err);
@@ -26,8 +26,8 @@ export class Sightings {
         });
     }
 
-    public static async list(licence: string): Promise<string | null> {
-        const sightingData = await Sightings.get(licence);
+    public static async list(license: string): Promise<string | null> {
+        const sightingData = await Sightings.get(license);
 
         if (sightingData.length) {
             const sightings = [];
@@ -48,9 +48,9 @@ export class Sightings {
         return null;
     }
 
-    public static insert(licence: string, author: string): void {
+    public static insert(license: string, author: string): void {
         const stmt = this.db.prepare('INSERT INTO sightings VALUES (?, ?, ?)');
-        stmt.run(licence, author, new Date().getTime());
+        stmt.run(license, author, new Date().getTime());
         stmt.finalize();
     }
 
