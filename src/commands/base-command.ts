@@ -1,6 +1,6 @@
-import { APIMessageContentResolvable, Client, Message, MessageAdditions, MessageOptions } from "discord.js";
-import { Settings } from "../services/settings";
-import { AvailableSettings } from "../enums/available-settings";
+import { APIMessageContentResolvable, Client, Message, MessageAdditions, MessageOptions } from 'discord.js';
+import { Settings } from '../services/settings';
+import { AvailableSettings } from '../enums/available-settings';
 
 export abstract class BaseCommand {
     protected message: Message;
@@ -18,7 +18,9 @@ export abstract class BaseCommand {
         return data;
     }
 
-    protected reply(message: APIMessageContentResolvable | (MessageOptions & { split?: false }) | MessageAdditions): void {
+    protected reply(
+        message: APIMessageContentResolvable | (MessageOptions & { split?: false }) | MessageAdditions
+    ): void {
         this.message.channel.send(message);
     }
 }

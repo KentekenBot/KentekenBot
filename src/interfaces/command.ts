@@ -1,3 +1,3 @@
 export interface ICommand {
-    handle(): void|Promise<void>;
+    handle(): void | Promise<void>;
 }

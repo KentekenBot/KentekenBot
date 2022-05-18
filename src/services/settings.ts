@@ -1,4 +1,4 @@
-import { AvailableSettings } from '../enums/available-settings'
+import { AvailableSettings } from '../enums/available-settings';
 import { existsSync, readFileSync } from 'fs';
 
 export class Settings {

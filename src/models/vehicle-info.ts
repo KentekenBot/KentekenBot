@@ -1,5 +1,5 @@
-import { OpenRdw } from "../services/open-rdw";
-import { BaseModel } from "./base-model";
+import { OpenRdw } from '../services/open-rdw';
+import { BaseModel } from './base-model';
 
 export class VehicleInfo extends BaseModel {
     public kenteken = '';
@@ -41,7 +41,6 @@ export class VehicleInfo extends BaseModel {
     public datum_eerste_tenaamstelling_in_nederland_dt = '';
     public catalogusprijs = '';
 
-
     public constructor(data: Record<string, unknown>) {
         super();
         this.hydrate(data);
@@ -49,7 +48,7 @@ export class VehicleInfo extends BaseModel {
         this.handelsbenaming = this.handelsbenaming.replace(this.merk, '');
     }
 
-    public static async get(licence: string): Promise<VehicleInfo|null> {
+    public static async get(licence: string): Promise<VehicleInfo | null> {
         const rdw = new OpenRdw();
         const data = await rdw.getVehicleInfo(licence);
 
@@ -64,7 +63,7 @@ export class VehicleInfo extends BaseModel {
         return this.datum_eerste_toelating.substr(0, 4);
     }
 
-    public getPrice(): null|number {
+    public getPrice(): null | number {
         if (!this.catalogusprijs) {
             return null;
         }

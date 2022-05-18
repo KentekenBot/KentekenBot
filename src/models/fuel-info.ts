@@ -1,5 +1,5 @@
-import { OpenRdw } from "../services/open-rdw";
-import { BaseModel } from "./base-model";
+import { OpenRdw } from '../services/open-rdw';
+import { BaseModel } from './base-model';
 
 export class FuelInfo extends BaseModel {
     public nettomaximumvermogen = '';
@@ -16,7 +16,7 @@ export class FuelInfo extends BaseModel {
         return new FuelInfo(data);
     }
 
-    public getHorsePower(): number|null {
+    public getHorsePower(): number | null {
         if (!this.nettomaximumvermogen) {
             return null;
         }

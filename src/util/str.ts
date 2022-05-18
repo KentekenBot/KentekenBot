@@ -1,6 +1,10 @@
 export class Str {
     public static capitalizeWords(str: string): string {
-        return str.toLowerCase().split(' ').map((word) => Str.capitalizeFirst(word)).join(' ');
+        return str
+            .toLowerCase()
+            .split(' ')
+            .map((word) => Str.capitalizeFirst(word))
+            .join(' ');
     }
 
     public static capitalizeFirst(str: string): string {

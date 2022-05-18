@@ -1,3 +1,3 @@
-import { Bot } from "./bot";
+import { Bot } from './bot';
 
-(new Bot()).liftOff();
+new Bot().liftOff();

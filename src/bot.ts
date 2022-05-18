@@ -1,14 +1,14 @@
-import { Client, Constructable, Message } from "discord.js";
-import { Settings } from "./services/settings";
-import { AvailableSettings } from "./enums/available-settings";
-import { Output } from "./services/output";
-import { ICommand } from "./interfaces/command";
-import { Licence } from "./commands/licence";
-import { Ping } from "./commands/ping";
+import { Client, Constructable, Message } from 'discord.js';
+import { Settings } from './services/settings';
+import { AvailableSettings } from './enums/available-settings';
+import { Output } from './services/output';
+import { ICommand } from './interfaces/command';
+import { Licence } from './commands/licence';
+import { Ping } from './commands/ping';
 
 export class Bot {
     private client = new Client();
-    private commands?: Record<string, Constructable<ICommand>>
+    private commands?: Record<string, Constructable<ICommand>>;
 
     public async liftOff(): Promise<void> {
         await this.login();
@@ -21,7 +21,7 @@ export class Bot {
         this.commands = this.getCommands();
 
         this.client.on('message', (message) => {
-            this.onMessageReceived(message)
+            this.onMessageReceived(message);
         });
     }
 
@@ -31,9 +31,9 @@ export class Bot {
 
     private getCommands(): Record<string, Constructable<ICommand>> {
         return {
-            'k': Licence,
-            'ping': Ping
-        }
+            k: Licence,
+            ping: Ping,
+        };
     }
 
     private onMessageReceived(message: Message): void {
@@ -45,15 +45,14 @@ export class Bot {
             return;
         }
 
-        const usedCommand = message.content.replace(Settings.get(AvailableSettings.COMMAND_PREFIX), '').split(' ')[0]
+        const usedCommand = message.content.replace(Settings.get(AvailableSettings.COMMAND_PREFIX), '').split(' ')[0];
 
-
-        if (!this.commands?.prototype.hasOwnProperty(usedCommand)) {
+        if (!this.commands?.hasOwnProperty(usedCommand)) {
             message.channel.send('Dat commando bestaat toch niet jonge');
             return;
         }
 
         const command = this.commands[usedCommand];
-        (new command(message, this.client)).handle();
+        new command(message, this.client).handle();
     }
 }

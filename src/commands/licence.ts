@@ -1,10 +1,10 @@
-import { ICommand } from "../interfaces/command";
-import { BaseCommand } from "./base-command";
-import { VehicleInfo } from "../models/vehicle-info";
-import { Str } from "../util/str";
-import { MessageEmbed } from "discord.js";
-import { Sightings } from "../services/sightings";
-import { FuelInfo } from "../models/fuel-info";
+import { ICommand } from '../interfaces/command';
+import { BaseCommand } from './base-command';
+import { VehicleInfo } from '../models/vehicle-info';
+import { Str } from '../util/str';
+import { MessageEmbed } from 'discord.js';
+import { Sightings } from '../services/sightings';
+import { FuelInfo } from '../models/fuel-info';
 
 export class Licence extends BaseCommand implements ICommand {
     public async handle(): Promise<void> {
@@ -17,13 +17,13 @@ export class Licence extends BaseCommand implements ICommand {
 
         if (!this.getLicenceRegex().test(licence)) {
             this.reply('Dat is geen kenteken kut');
-            return
+            return;
         }
 
         const vehicle = await VehicleInfo.get(licence);
         if (!vehicle) {
             this.reply('Ik kon dat kenteken niet vindn kerol');
-            Sightings.insert(licence, this.message.author.id)
+            Sightings.insert(licence, this.message.author.id);
             return;
         }
 
@@ -33,8 +33,8 @@ export class Licence extends BaseCommand implements ICommand {
             Str.capitalizeWords(vehicle.eerste_kleur),
             `${fuelInfo.getHorsePower() ?? 'Onbekend'} pk`,
             vehicle.getPrice() ? `€${vehicle.getPrice()}` : 'Onbekende catalogusprijs',
-            vehicle.getConstructionYear()
-        ]
+            vehicle.getConstructionYear(),
+        ];
 
         const response = new MessageEmbed()
             .setTitle(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`)
@@ -47,7 +47,7 @@ export class Licence extends BaseCommand implements ICommand {
             response.addField('Eerder gespot door', sightings);
         }
 
-        Sightings.insert(licence, this.message.author.id)
+        Sightings.insert(licence, this.message.author.id);
 
         this.reply(response);
     }
