@@ -1,5 +1,6 @@
 import { Database } from "sqlite3";
 import { DateTime } from "../util/date-time";
+import fs from "fs";
 
 export class Sightings {
     private static db: Database;
@@ -50,7 +51,11 @@ export class Sightings {
     }
 
     private static getDb(): Database {
-        const db =  new Database(__dirname + '/../../kentekenbot.db');
+        const fileName = __dirname + '/../../kentekenbot.db';
+        if(!fs.existsSync(fileName)) {
+            throw new Error('Unable to load database, no such file.')
+        }
+        const db =  new Database(fileName);
         this.ensureTableExists(db);
 
         return db;
