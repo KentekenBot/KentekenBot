@@ -1,10 +1,11 @@
 import { ICommand } from "../interfaces/command";
 import { BaseCommand } from "./base-command";
-import { VehicleInfo } from "../models/vehicleInfo";
+import { VehicleInfo } from "../models/vehicle-info";
 import { Str } from "../util/str";
 import { MessageEmbed } from "discord.js";
 import { Sightings } from "../services/sightings";
 import { DateTime } from "../util/date-time";
+import { FuelInfo } from "../models/fuel-info";
 
 export class Licence extends BaseCommand implements ICommand {
     public async handle(): Promise<void> {
@@ -21,13 +22,20 @@ export class Licence extends BaseCommand implements ICommand {
             return
         }
 
-        const vehicle = await VehicleInfo.get(licence)
+        const vehicle = await VehicleInfo.get(licence);
+        const fuelInfo = await FuelInfo.get(licence);
 
+        const description = [
+            Str.capitalizeWords(vehicle.eerste_kleur),
+            `${fuelInfo.getHorsePower() ?? 'Onbekend'} pk`,
+            vehicle.getPrice() ? `€${vehicle.getPrice()}` : 'Onbekende catalogusprijs',
+            vehicle.getConstructionYear()
+        ]
 
         const response = new MessageEmbed()
             .setTitle(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`)
             .setURL(`https://kentekencheck.nl/kenteken?i=${licence}`)
-            .setDescription(`${Str.capitalizeWords(vehicle.eerste_kleur)} - ${vehicle.getConstructionYear()}`)
+            .setDescription(description.join(' - '))
             .setFooter(licence);
 
 
