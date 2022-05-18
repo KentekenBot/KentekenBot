@@ -1,8 +1,8 @@
 export abstract class BaseModel {
-    protected hydrate(data): void {
-        for (const key in data) {
+    protected hydrate(data: Record<string, unknown>): void {
+        for (const [key, value] of Object.entries(data)) {
             if (this.hasOwnProperty(key)) {
-                this[key] = data[key];
+                (<Record<string, unknown>>this)[key] = value
             }
         }
     }

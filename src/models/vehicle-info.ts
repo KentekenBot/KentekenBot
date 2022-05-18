@@ -49,7 +49,7 @@ export class VehicleInfo extends BaseModel {
         this.handelsbenaming = this.handelsbenaming.replace(this.merk, '');
     }
 
-    public static async get(licence): Promise<VehicleInfo|null> {
+    public static async get(licence: string): Promise<VehicleInfo|null> {
         const rdw = new OpenRdw();
         const data = await rdw.getVehicleInfo(licence);
 

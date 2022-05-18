@@ -7,16 +7,15 @@ import { Licence } from "./commands/licence";
 import { Ping } from "./commands/ping";
 
 export class Bot {
-    private client: Client;
-    private commands: Record<string, Constructable<ICommand>>
+    private client = new Client();
+    private commands?: Record<string, Constructable<ICommand>>
 
     public async liftOff(): Promise<void> {
-        this.client = new Client();
         await this.login();
 
         this.client.on('ready', () => {
-            Output.line(`Logged in as ${this.client.user.tag}`);
-            this.client.user.setActivity(`${Settings.get(AvailableSettings.COMMAND_PREFIX)}k <kenteken>`);
+            Output.line(`Logged in as ${this.client.user?.tag}`);
+            this.client.user?.setActivity(`${Settings.get(AvailableSettings.COMMAND_PREFIX)}k <kenteken>`);
         });
 
         this.commands = this.getCommands();
@@ -48,8 +47,9 @@ export class Bot {
 
         const usedCommand = message.content.replace(Settings.get(AvailableSettings.COMMAND_PREFIX), '').split(' ')[0]
 
-        if (!this.commands.hasOwnProperty(usedCommand)) {
-            message.channel.send('Dat commando bestaat toch niet jonge')
+        if (!this.commands?.hasOwnProperty(usedCommand)) {
+            message.channel.send('Dat commando bestaat toch niet jonge');
+            return;
         }
 
         const command = this.commands[usedCommand];
