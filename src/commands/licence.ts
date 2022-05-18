@@ -4,7 +4,6 @@ import { VehicleInfo } from "../models/vehicle-info";
 import { Str } from "../util/str";
 import { MessageEmbed } from "discord.js";
 import { Sightings } from "../services/sightings";
-import { DateTime } from "../util/date-time";
 import { FuelInfo } from "../models/fuel-info";
 
 export class Licence extends BaseCommand implements ICommand {
@@ -15,13 +14,11 @@ export class Licence extends BaseCommand implements ICommand {
         }
 
         const licence = input.toUpperCase().split('-').join('');
-        const regex = /^(([A-Z0-9]{2}-?[A-Z0-9]{2}-?[A-Z0-9]{2})|([0-9]{2}-?[A-Z]{3}-?[0-9])|([0-9]-?[A-Z]{3}-?[0-9]{2})|([A-Z]-?\d{3}-?[A-Z]{2})|([A-Z]{2}-?[0-9]{3}-?[A-Z]))$/;
 
-        if (!regex.test(licence)) {
+        if (!this.getLicenceRegex().test(licence)) {
             this.reply('Dat is geen kenteken kut');
             return
         }
-
 
         const vehicle = await VehicleInfo.get(licence);
         if (!vehicle) {
@@ -53,5 +50,9 @@ export class Licence extends BaseCommand implements ICommand {
         Sightings.insert(licence, this.message.author.id)
 
         this.reply(response);
+    }
+
+    private getLicenceRegex(): RegExp {
+        return /^(([A-Z0-9]{2}-?[A-Z0-9]{2}-?[A-Z0-9]{2})|([0-9]{2}-?[A-Z]{3}-?[0-9])|([0-9]-?[A-Z]{3}-?[0-9]{2})|([A-Z]-?\d{3}-?[A-Z]{2})|([A-Z]{2}-?[0-9]{3}-?[A-Z]))$/;
     }
 }
