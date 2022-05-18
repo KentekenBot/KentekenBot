@@ -47,7 +47,8 @@ export class Bot {
 
         const usedCommand = message.content.replace(Settings.get(AvailableSettings.COMMAND_PREFIX), '').split(' ')[0]
 
-        if (!this.commands?.hasOwnProperty(usedCommand)) {
+
+        if (!this.commands?.prototype.hasOwnProperty(usedCommand)) {
             message.channel.send('Dat commando bestaat toch niet jonge');
             return;
         }

@@ -1,5 +1,5 @@
 import { AvailableSettings } from '../enums/available-settings'
-import { existsSync, readFile, readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 
 export class Settings {
     private static settings: Record<AvailableSettings, string>;
