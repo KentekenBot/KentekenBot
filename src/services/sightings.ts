@@ -1,4 +1,5 @@
 import { Database } from "sqlite3";
+import { DateTime } from "../util/date-time";
 
 export class Sightings {
     private static db: Database;
@@ -17,6 +18,29 @@ export class Sightings {
                 }
             })
         })
+    }
+
+    public static async list(licence: string): Promise<string|null> {
+        const sightingData = await Sightings.get(licence);
+
+        if (sightingData.length) {
+            const sightings = []
+            const sightingCount = sightingData[0].count as number
+
+            sightingData.forEach((sighting) => {
+                const dateTime = sighting.date_time;
+                const sightingAt = DateTime.timeSince(new Date(parseInt(dateTime as string)))
+                sightings.push(`<@${sighting.discord_user_id}> - ${sightingAt}`);
+            });
+
+            if (sightingData.length == 10 && sightingCount > 10) {
+                sightings.push(`En ${sightingCount - 10} andere ${(sightingCount - 10) == 1 ? "keer" : "keren"} gespot.`);
+            }
+
+            return sightings.join('\n')
+        }
+
+        return null;
     }
 
     public static insert(licence: string, author: string): void {
