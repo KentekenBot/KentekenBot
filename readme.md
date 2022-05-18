@@ -1,6 +1,6 @@
 # KentekenBot
 
-A Discord bot that allows you to get info from check dutch license plates using commands.
+A Discord bot that allows you to get info from Dutch license plates using commands.
 
 
 ## Run Locally
