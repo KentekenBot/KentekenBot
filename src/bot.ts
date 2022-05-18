@@ -1,13 +1,14 @@
-import { Client, Message } from "discord.js";
+import { Client, Constructable, Message } from "discord.js";
 import { Settings } from "./services/settings";
 import { AvailableSettings } from "./enums/available-settings";
 import { Output } from "./services/output";
 import { ICommand } from "./interfaces/command";
 import { Licence } from "./commands/licence";
+import { Ping } from "./commands/ping";
 
 export class Bot {
     private client: Client;
-    private commands: Record<string, ICommand>
+    private commands: Record<string, Constructable<ICommand>>
 
     public async liftOff(): Promise<void> {
         this.client = new Client();
@@ -29,12 +30,12 @@ export class Bot {
         return this.client.login(Settings.get(AvailableSettings.TOKEN));
     }
 
-    private getCommands(): Record<string, ICommand> {
+    private getCommands(): Record<string, Constructable<ICommand>> {
         return {
-            'k': Licence
+            'k': Licence,
+            'ping': Ping
         }
     }
-
 
     private onMessageReceived(message: Message): void {
         if (message.author.bot) {
@@ -51,8 +52,7 @@ export class Bot {
             message.channel.send('Dat commando bestaat toch niet jonge')
         }
 
-        const command = (new Licence(message, this.client)).handle();
+        const command = this.commands[usedCommand];
+        (new command(message, this.client)).handle();
     }
-
-
 }
