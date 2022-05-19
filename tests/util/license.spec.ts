@@ -24,28 +24,28 @@ describe('License util class isValid method', () => {
         });
     });
 
-    //
-    // it('should return true for valid licenses', () => {
-    //     validVariations.forEach((license) => {
-    //         expect(License.isValid(license)).toBeTruthy();
-    //     });
-    // });
-    //
-    // it('should return true for valid licences without hyphens', () => {
-    //     validVariations.forEach((license) => {
-    //         License.isValid(license.replace(/-/g, ''));
-    //     });
-    // });
-    //
-    // it('should return true for lower cased valid licenses', () => {
-    //     validVariations.forEach((license) => {
-    //         License.isValid(license.toLowerCase());
-    //     });
-    // });
-    //
-    // it('should return true for lower cased valid licenses without hyphens', () => {
-    //     validVariations.forEach((license) => {
-    //         License.isValid(license.replace(/-/g, ''));
-    //     });
-    // });
+    validVariations.forEach((license) => {
+        const check = license.toLowerCase();
+        it(`should return true for licences in format ${check} (in lower case)`, function () {
+            expect(License.isValid(check)).toBeTruthy();
+        });
+    });
+
+    validVariations.forEach((license) => {
+        const check = license.replace(/-/g, '');
+        it(`should return true for licences in format ${check} (no hyphens)`, function () {
+            expect(License.isValid(check)).toBeTruthy();
+        });
+    });
+
+    validVariations.forEach((license) => {
+        const check = license.toLowerCase().replace(/-/g, '');
+        it(`should return true for licences in format ${check} (lowe case and no hyphens)`, function () {
+            expect(License.isValid(check)).toBeTruthy();
+        });
+    });
+
+    it(`should return false for invalid licenses`, function () {
+        expect(License.isValid('X-999-XXX')).toBeFalsy();
+    });
 });

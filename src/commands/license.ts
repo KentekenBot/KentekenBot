@@ -2,6 +2,7 @@ import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
 import { VehicleInfo } from '../models/vehicle-info';
 import { Str } from '../util/str';
+import { License as LicenseUtil } from '../util/license';
 import { MessageActionRow, MessageButton, MessageEmbed } from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
@@ -15,7 +16,7 @@ export class License extends BaseCommand implements ICommand {
 
         const license = input.toUpperCase().split('-').join('');
 
-        if (!this.getLicenseRegex().test(license)) {
+        if (!LicenseUtil.isValid(license)) {
             this.reply('Dat is geen kenteken kut');
             return;
         }
@@ -39,7 +40,7 @@ export class License extends BaseCommand implements ICommand {
         const response = new MessageEmbed()
             .setTitle(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`)
             .setDescription(description.join(' - '))
-            .setFooter({text: license});
+            .setFooter({ text: license });
 
         const sightings = await Sightings.list(license);
         if (sightings) {
@@ -47,21 +48,17 @@ export class License extends BaseCommand implements ICommand {
         }
         Sightings.insert(license, this.message.author.id);
 
-        const links = new MessageActionRow()
-            .addComponents(
-                new MessageButton().
-                    setLabel('Kentekencheck').
-                    setStyle('LINK').
-                    setURL(`https://kentekencheck.nl/kenteken?i=${license}`),
-                new MessageButton().
-                    setLabel('Finnik').
-                    setStyle('LINK').
-                    setURL(`https://finnik.nl/kenteken/${license}/gratis`));
+        const links = new MessageActionRow().addComponents(
+            new MessageButton()
+                .setLabel('Kentekencheck')
+                .setStyle('LINK')
+                .setURL(`https://kentekencheck.nl/kenteken?i=${license}`),
+            new MessageButton()
+                .setLabel('Finnik')
+                .setStyle('LINK')
+                .setURL(`https://finnik.nl/kenteken/${license}/gratis`)
+        );
 
-        this.reply({embeds: [response], components:[links]});
-    }
-
-    private getLicenseRegex(): RegExp {
-        return /^(([A-Z0-9]{2}-?[A-Z0-9]{2}-?[A-Z0-9]{2})|([0-9]{2}-?[A-Z]{3}-?[0-9])|([0-9]-?[A-Z]{3}-?[0-9]{2})|([A-Z]-?\d{3}-?[A-Z]{2})|([A-Z]{2}-?[0-9]{3}-?[A-Z]))$/;
+        this.reply({ embeds: [response], components: [links] });
     }
 }
