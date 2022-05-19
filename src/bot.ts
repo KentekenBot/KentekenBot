@@ -1,14 +1,14 @@
-import { Client, Constructable, Message } from 'discord.js';
+import { Client, Constructable, Intents, Message } from 'discord.js';
 import { Settings } from './services/settings';
 import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
-import { ICommand } from './interfaces/command';
 import { License } from './commands/license';
 import { Ping } from './commands/ping';
+import { CommandConstructor } from './interfaces/command-constructor';
 
 export class Bot {
-    private client = new Client();
-    private commands?: Record<string, Constructable<ICommand>>;
+    private client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+    private commands?: Record<string, CommandConstructor>;
 
     public async liftOff(): Promise<void> {
         await this.login();
@@ -20,7 +20,7 @@ export class Bot {
 
         this.commands = this.getCommands();
 
-        this.client.on('message', (message) => {
+        this.client.on('messageCreate', (message) => {
             this.onMessageReceived(message);
         });
     }
@@ -29,13 +29,12 @@ export class Bot {
         return this.client.login(Settings.get(AvailableSettings.TOKEN));
     }
 
-    private getCommands(): Record<string, Constructable<ICommand>> {
+    private getCommands(): Record<string, CommandConstructor> {
         return {
             k: License,
             ping: Ping,
         };
     }
-
     private onMessageReceived(message: Message): void {
         if (message.author.bot) {
             return;
