@@ -7,7 +7,7 @@ import { Ping } from './commands/ping';
 import { CommandConstructor } from './interfaces/command-constructor';
 
 export class Bot {
-    private client = new Client({ intents: [Intents.FLAGS.GUILD_MESSAGES] });
+    private client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
     private commands?: Record<string, CommandConstructor>;
 
     public async liftOff(): Promise<void> {
