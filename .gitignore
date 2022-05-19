@@ -141,7 +141,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-  
+
 # General
 .DS_Store
 .AppleDouble
@@ -169,7 +169,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-  
+
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -179,6 +179,8 @@ Temporary Items
 
 # Local History for Visual Studio Code
 .history/
+
+.idea
 
 settings.json
 kentekenbot.db
