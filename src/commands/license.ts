@@ -2,7 +2,7 @@ import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
 import { VehicleInfo } from '../models/vehicle-info';
 import { Str } from '../util/str';
-import { MessageEmbed } from 'discord.js';
+import { MessageActionRow, MessageButton, MessageEmbed } from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
 
@@ -48,7 +48,10 @@ export class License extends BaseCommand implements ICommand {
         }
         Sightings.insert(license, this.message.author.id);
 
-        this.reply(response);
+        const links = new MessageActionRow()
+            .addComponents(new MessageButton().setLabel('Kentekencheck').setStyle('LINK').setURL(`https://kentekencheck.nl/kenteken?i=${license}`));
+
+        this.reply({embeds: [response], components:[links]});
     }
 
     private getLicenseRegex(): RegExp {

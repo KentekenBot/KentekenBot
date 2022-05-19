@@ -1,4 +1,4 @@
-import { Client, Constructable, Message } from 'discord.js';
+import { Client, Constructable, Intents, Message } from 'discord.js';
 import { Settings } from './services/settings';
 import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
@@ -7,7 +7,7 @@ import { License } from './commands/license';
 import { Ping } from './commands/ping';
 
 export class Bot {
-    private client = new Client();
+    private client = new Client({intents: [Intents.FLAGS.GUILD_MESSAGES]});
     private commands?: Record<string, Constructable<ICommand>>;
 
     public async liftOff(): Promise<void> {
@@ -20,7 +20,7 @@ export class Bot {
 
         this.commands = this.getCommands();
 
-        this.client.on('message', (message) => {
+        this.client.on('messageCreate', (message) => {
             this.onMessageReceived(message);
         });
     }
