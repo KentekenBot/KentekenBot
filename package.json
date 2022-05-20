@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon",
     "serve": "ts-node ./src/index.ts",
+    "test": "jest",
     "lint": "eslint ./src --ext .ts",
     "lint:fix": "eslint ./src --ext .ts --fix"
   },
