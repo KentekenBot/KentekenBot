@@ -6,6 +6,8 @@ import { License as LicenseUtil } from '../util/license';
 import { MessageActionRow, MessageButton, MessageEmbed } from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
+import { Sighting } from '../models/sighting';
+import { DateTime } from '../util/date-time';
 
 export class License extends BaseCommand implements ICommand {
     public async handle(): Promise<void> {
@@ -24,7 +26,8 @@ export class License extends BaseCommand implements ICommand {
         const vehicle = await VehicleInfo.get(license);
         if (!vehicle) {
             this.reply('Ik kon dat kenteken niet vindn kerol');
-            Sightings.insert(license, this.message.author.id);
+
+            Sightings.insert(license, this.message.author);
             return;
         }
 
@@ -46,7 +49,8 @@ export class License extends BaseCommand implements ICommand {
         if (sightings) {
             response.addField('Eerder gespot door', sightings);
         }
-        Sightings.insert(license, this.message.author.id);
+
+        Sightings.insert(license, this.message.author);
 
         const links = new MessageActionRow().addComponents(
             new MessageButton()
