@@ -1,5 +1,11 @@
 import { License } from '../../src/util/license';
 
+describe('License util class format method', () => {
+    it('should format and uppercase a valid license', function () {
+        expect(License.format('x999xx')).toBe('X-999-XX');
+    });
+});
+
 describe('License util class isValid method', () => {
     const validVariations = [
         'XX-99-99',
