@@ -6,10 +6,13 @@ on:
       - 'feature/deploy'
   workflow_dispatch:
 
+name: 'Build and deploy'
+
 jobs:
   build:
+    name: 'Build and deploy'
     runs-on: ubuntu-latest
-
+    environment: Production
     steps:
       - uses: actions/checkout@v2
 
