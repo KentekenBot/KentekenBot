@@ -43,6 +43,7 @@ export class License extends BaseCommand implements ICommand {
         const response = new MessageEmbed()
             .setTitle(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`)
             .setDescription(description.join(' - '))
+            .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.toSnakeCase(vehicle.merk)}.png`)
             .setFooter({ text: LicenseUtil.format(license) });
 
         const sightings = await Sightings.list(license);

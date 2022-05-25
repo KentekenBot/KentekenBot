@@ -18,9 +18,7 @@ export abstract class BaseCommand {
         return data;
     }
 
-    protected reply(
-        options: string | MessagePayload | MessageOptions
-    ): void {
+    protected reply(options: string | MessagePayload | MessageOptions): void {
         this.message.channel.send(options);
     }
 }
