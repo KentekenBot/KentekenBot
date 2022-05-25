@@ -4,6 +4,7 @@ import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
 import { License } from './commands/license';
 import { Ping } from './commands/ping';
+import { Status } from './commands/status';
 import { CommandConstructor } from './interfaces/command-constructor';
 
 export class Bot {
@@ -33,6 +34,7 @@ export class Bot {
         return {
             k: License,
             ping: Ping,
+            status: Status,
         };
     }
     private onMessageReceived(message: Message): void {
