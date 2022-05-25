@@ -10,4 +10,8 @@ export class Str {
     public static capitalizeFirst(str: string): string {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
+
+    public static toSnakeCase(str: string): string {
+        return str.toLowerCase().replace(/ /g,"_");
+    }
 }
