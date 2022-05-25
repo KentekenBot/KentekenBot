@@ -1,5 +1,5 @@
 import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelizeConnection } from './config';
+import { sequelizeConnection } from '../services/sequelize';
 
 interface SightingAttributes {
     id: number;

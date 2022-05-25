@@ -3,9 +3,7 @@ import { User } from 'discord.js';
 import { DateTime } from '../util/date-time';
 
 export class Sightings {
-    public static async list(license: string): Promise<string | null> {
-        const limit = 10;
-
+    public static async list(license: string, limit = 10): Promise<string | null> {
         const sightingData = await Sighting.findAndCountAll({
             limit,
             where: {
