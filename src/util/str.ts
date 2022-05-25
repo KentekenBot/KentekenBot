@@ -1,5 +1,5 @@
 export class Str {
-    public static capitalizeWords(str: string): string {
+    public static toTitleCase(str: string): string {
         return str
             .toLowerCase()
             .split(' ')
@@ -12,6 +12,10 @@ export class Str {
     }
 
     public static toSnakeCase(str: string): string {
-        return str.toLowerCase().replace(/ /g, '_');
+        return str
+            .replace(/\d+/g, ' ')
+            .split(/ |\B(?=[A-Z])/)
+            .join('_')
+            .toLowerCase();
     }
 }
