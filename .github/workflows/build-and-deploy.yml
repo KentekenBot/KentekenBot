@@ -51,5 +51,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
+            export NVM_DIR=~/.nvm
+            source ~/.nvm/nvm.sh
             cd ${{ secrets.DEPLOY_PATH }}
             pm2 reload kentekenbot
