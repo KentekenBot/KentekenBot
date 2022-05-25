@@ -6,6 +6,7 @@ export class Sightings {
     public static async list(license: string, limit = 10): Promise<string | null> {
         const sightingData = await Sighting.findAndCountAll({
             limit,
+            order: [['createdAt', 'DESC']],
             where: {
                 license,
             },
