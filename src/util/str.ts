@@ -11,11 +11,7 @@ export class Str {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    public static toSnakeCase(str: string): string {
-        return str
-            .replace(/\d+/g, ' ')
-            .split(/ |\B(?=[A-Z])/)
-            .join('_')
-            .toLowerCase();
+    public static humanToSnakeCase(str: string): string {
+        return str.toLowerCase().replace(/ /g, '_');
     }
 }
