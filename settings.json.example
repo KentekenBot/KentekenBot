@@ -1,5 +1,5 @@
 {
-    "token": "TOKEN HERE",
+    "token": "DISCORD_TOKEN",
     "commandPrefix": ";",
-    "openDataToken": "OPEN DATA TOKEN HERE"
+    "openDataToken": "OPEN_DATA_TOKEN"
 }
