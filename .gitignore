@@ -183,4 +183,4 @@ Temporary Items
 .idea
 
 settings.json
-kentekenbot.db
+*.db
