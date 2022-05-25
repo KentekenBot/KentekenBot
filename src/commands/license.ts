@@ -6,8 +6,6 @@ import { License as LicenseUtil } from '../util/license';
 import { MessageActionRow, MessageButton, MessageEmbed } from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
-import { Sighting } from '../models/sighting';
-import { DateTime } from '../util/date-time';
 
 export class License extends BaseCommand implements ICommand {
     public async handle(): Promise<void> {
