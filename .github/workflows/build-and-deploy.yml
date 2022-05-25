@@ -31,10 +31,9 @@ jobs:
           find . -name . -o -prune -exec rm -rf -- {} +
           rm -rf src tests
       - name: deploy
-        uses: burnett01/rsync-deployments@5.1
+        uses: burnett01/rsync-deployments@5.2
         with:
           switches: -avzr --delete
-          path: .
           remote_path: ${{ secrets.DEPLOY_PATH }}
           remote_host: ${{ secrets.DEPLOY_HOST }}
           remote_user: ${{ secrets.DEPLOY_USER }}
