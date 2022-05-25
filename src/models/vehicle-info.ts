@@ -60,7 +60,7 @@ export class VehicleInfo extends BaseModel {
     }
 
     public getConstructionYear() {
-        return this.datum_eerste_toelating.substr(0, 4);
+        return this.datum_eerste_toelating.substring(0, 4);
     }
 
     public getPrice(): null | number {
