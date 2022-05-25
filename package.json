@@ -7,8 +7,9 @@
     "dev": "nodemon",
     "serve": "ts-node ./src/index.ts",
     "test": "jest",
-    "lint": "eslint ./src --ext .ts",
-    "lint:fix": "eslint ./src --ext .ts --fix"
+    "lint": "eslint ./src --max-warnings=0 --ext .ts",
+    "lint:fix": "eslint ./src --max-warnings=0 --ext .ts --fix",
+    "prepare": "husky install"
   },
   "author": "Kefkef123",
   "license": "ISC",
@@ -31,7 +32,9 @@
     "eslint": "^8.15.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^8.0.0",
     "jest": "^28.1.0",
+    "lint-staged": "^12.4.2",
     "nodemon": "^2.0.16",
     "prettier": "2.6.2",
     "ts-node": "^10.7.0",
