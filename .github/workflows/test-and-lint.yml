@@ -3,10 +3,12 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
+name: Test and lint
+
 jobs:
   build:
+    name: Test and lint
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
 
