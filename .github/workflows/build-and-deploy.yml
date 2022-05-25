@@ -31,7 +31,7 @@ jobs:
           find . -name . -o -prune -exec rm -rf -- {} +
           rm -rf src tests
       - name: deploy
-        uses: burnett01/rsync-deployments@5.2
+        uses: burnett01/rsync-deployments@5.1
         with:
           switches: -avzr --delete
           path: .
