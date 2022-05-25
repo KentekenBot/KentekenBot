@@ -1,4 +1,4 @@
-import { Client, Constructable, Intents, Message } from 'discord.js';
+import { Client, Intents, Message } from 'discord.js';
 import { Settings } from './services/settings';
 import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
