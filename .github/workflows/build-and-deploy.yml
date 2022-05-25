@@ -30,7 +30,7 @@ jobs:
           npm run build
           cp settings.json.example settings.json
           sed -i 's/DISCORD_TOKEN/${{ secrets.DISCORD_TOKEN }}/g' settings.json
-          sed -i 's/OPEN_DATA_TOKEN/${{ secrets.OPEN_DATE_TOKEN }}/g' settings.json
+          sed -i 's/OPEN_DATA_TOKEN/${{ secrets.OPEN_DATA_TOKEN }}/g' settings.json
       - name: Cleanup
         run: |
           npm run build
