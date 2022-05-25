@@ -1,6 +1,7 @@
 on:
-  tag:
-    branches: [ master ]
+  push:
+    tags:
+      - '**'
   workflow_dispatch:
 
 jobs:
