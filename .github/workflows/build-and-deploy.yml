@@ -28,7 +28,7 @@ jobs:
       - name: Build bot
         run: |
           npm run build
-          find . -name . -o -prune -exec rm -rf -- {} +
+          find . -maxdepth 1 -name ".*" -not -name "." -exec rm -rf {} \;
           rm -rf src tests
       - name: deploy
         uses: burnett01/rsync-deployments@5.2
