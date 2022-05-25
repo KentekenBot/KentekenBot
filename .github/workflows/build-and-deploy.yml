@@ -2,6 +2,8 @@ on:
   push:
     tags:
       - '**'
+    branches:
+      - 'feature/deploy'
   workflow_dispatch:
 
 jobs:
