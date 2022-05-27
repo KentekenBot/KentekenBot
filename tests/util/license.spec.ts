@@ -3,6 +3,7 @@ import { License } from '../../src/util/license';
 describe('License util class format method', () => {
     it('should format and uppercase a valid license', function () {
         expect(License.format('x999xx')).toBe('X-999-XX');
+        expect(License.format('xx999x')).toBe('XX-999-X');
     });
 });
 
