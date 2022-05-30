@@ -32,16 +32,19 @@ export class License extends BaseCommand implements ICommand {
         const fuelInfo = await FuelInfo.get(license);
 
         const description = [
-            Str.capitalizeWords(vehicle.eerste_kleur),
+            Str.toTitleCase(vehicle.eerste_kleur),
             `${fuelInfo.getHorsePower() ?? 'Onbekend'} pk`,
             vehicle.getPrice() ? `€${vehicle.getPrice()}` : 'Onbekende catalogusprijs',
             vehicle.getConstructionYear(),
         ];
 
+        console.log(vehicle.merk);
+        console.log(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicle.merk)}.png`);
+
         const response = new MessageEmbed()
-            .setTitle(`${Str.capitalizeWords(vehicle.merk)} ${Str.capitalizeWords(vehicle.handelsbenaming)}`)
+            .setTitle(`${Str.toTitleCase(vehicle.merk)} ${Str.toTitleCase(vehicle.handelsbenaming)}`)
             .setDescription(description.join(' - '))
-            .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.toSnakeCase(vehicle.merk)}.png`)
+            .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicle.merk)}.png`)
             .setFooter({ text: LicenseUtil.format(license) });
 
         const sightings = await Sightings.list(license);
