@@ -5,7 +5,8 @@
   "main": "bot.js",
   "scripts": {
     "dev": "nodemon",
-    "serve": "ts-node ./src/index.ts",
+    "build": "tsc",
+    "serve": "node ./dist/index.js",
     "test": "jest",
     "lint": "eslint ./src --max-warnings=0 --ext .ts",
     "lint:fix": "eslint ./src --max-warnings=0 --ext .ts --fix",
