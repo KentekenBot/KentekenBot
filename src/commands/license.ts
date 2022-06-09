@@ -38,9 +38,6 @@ export class License extends BaseCommand implements ICommand {
             vehicle.getConstructionYear(),
         ];
 
-        console.log(vehicle.merk);
-        console.log(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicle.merk)}.png`);
-
         const response = new MessageEmbed()
             .setTitle(`${Str.toTitleCase(vehicle.merk)} ${Str.toTitleCase(vehicle.handelsbenaming)}`)
             .setDescription(description.join(' - '))
