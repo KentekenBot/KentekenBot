@@ -1,6 +1,7 @@
 import { Sighting } from '../models/sighting';
 import { Guild, User } from 'discord.js';
 import { DateTime } from '../util/date-time';
+import { DiscordTimestamps } from '../enums/discord-timestamps';
 
 export class Sightings {
     public static async list(license: string, discordGuildId: string | null, limit = 10): Promise<string | null> {
@@ -28,7 +29,10 @@ export class Sightings {
         }
 
         const sightings = sightingData.rows.map((sighting) => {
-            return `<@${sighting.discordUserId}> - ${DateTime.getDiscordTimestamp(sighting.createdAt.getTime())}`;
+            return `<@${sighting.discordUserId}> - ${DateTime.getDiscordTimestamp(
+                sighting.createdAt.getTime(),
+                DiscordTimestamps.RELATIVE
+            )}`;
         });
 
         const count = sightingData.count;
