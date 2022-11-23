@@ -1,26 +1,19 @@
 import { OpenRdw } from '../services/open-rdw';
-import { BaseModel } from './base-model';
+import { EngineInfo } from './engine-info';
 
-export class FuelInfo extends BaseModel {
-    public nettomaximumvermogen = '';
-
-    public constructor(data: Record<string, unknown>) {
-        super();
-        this.hydrate(data);
-    }
+export class FuelInfo {
+    public engines: EngineInfo[] = [];
 
     public static async get(license: string): Promise<FuelInfo> {
         const rdw = new OpenRdw();
         const data = await rdw.getFuelInfo(license);
 
-        return new FuelInfo(data);
-    }
+        const info = new FuelInfo();
 
-    public getHorsePower(): number | null {
-        if (!this.nettomaximumvermogen) {
-            return null;
-        }
+        data.forEach((engine) => {
+            info.engines.push(new EngineInfo(engine));
+        });
 
-        return Math.round(parseFloat(this.nettomaximumvermogen) * 1.362);
+        return info;
     }
 }

@@ -31,16 +31,23 @@ export class License extends BaseCommand implements ICommand {
 
         const fuelInfo = await FuelInfo.get(license);
 
-        const description = [
-            Str.toTitleCase(vehicle.eerste_kleur),
-            `${fuelInfo.getHorsePower() ?? 'Onbekend'} pk`,
-            vehicle.getPrice() ? `€${vehicle.getPrice()}` : 'Onbekende catalogusprijs',
-            vehicle.getConstructionYear(),
+        const fuelDiscription: string[] = [];
+
+        fuelInfo.engines.forEach((engine) => {
+            fuelDiscription.push(engine.getHorsePowerDescription());
+        });
+
+        const meta = [
+            `🎨 ${Str.toTitleCase(vehicle.eerste_kleur)}`,
+            vehicle.getPrice() ? `💵 €${vehicle.getPrice()}` : '💵 Onbekende catalogusprijs',
+            `📅 ${vehicle.getConstructionYear()}`,
         ];
+
+        const description = fuelDiscription.join('  -  ') + '\n' + meta.join('  -  ');
 
         const response = new MessageEmbed()
             .setTitle(`${Str.toTitleCase(vehicle.merk)} ${Str.toTitleCase(vehicle.handelsbenaming)}`)
-            .setDescription(description.join(' - '))
+            .setDescription(description)
             .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicle.merk)}.png`)
             .setFooter({ text: LicenseUtil.format(license) });
 
