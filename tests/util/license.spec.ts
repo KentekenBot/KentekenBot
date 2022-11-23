@@ -47,7 +47,7 @@ describe('License util class isValid method', () => {
 
     validVariations.forEach((license) => {
         const check = license.toLowerCase().replace(/-/g, '');
-        it(`should return true for licences in format ${check} (lowe case and no hyphens)`, function () {
+        it(`should return true for licences in format ${check} (lower case and no hyphens)`, function () {
             expect(License.isValid(check)).toBeTruthy();
         });
     });
