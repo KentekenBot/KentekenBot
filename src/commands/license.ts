@@ -40,8 +40,8 @@ export class License extends BaseCommand implements ICommand {
 
         const meta = [
             `🎨 ${Str.toTitleCase(vehicle.eerste_kleur)}`,
-            vehicle.getPrice() ? `💵 €${vehicle.getPrice()}` : '💵 Onbekende catalogusprijs',
-            `🗓️  ${vehicle.getConstructionYear()}`,
+            vehicle.getPriceDescription(),
+            `🗓️ ${vehicle.getConstructionYear()}`,
         ];
 
         const description = fuelDescription.join('  -  ') + '\n' + meta.join('  -  ');
