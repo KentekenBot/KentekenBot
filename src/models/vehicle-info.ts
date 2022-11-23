@@ -60,10 +60,6 @@ export class VehicleInfo extends BaseModel {
     }
 
     public getPrice(): null | number {
-        if (!this.catalogusprijs) {
-            return null;
-        }
-
-        return parseInt(this.catalogusprijs);
+        return this.catalogusprijs ? parseInt(this.catalogusprijs) : null;
     }
 }

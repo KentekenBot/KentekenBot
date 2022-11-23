@@ -32,10 +32,6 @@ export class EngineInfo extends BaseModel {
     }
 
     public getEmoji(): string {
-        if (this.brandstof_omschrijving === 'Elektriciteit') {
-            return '⚡';
-        }
-
-        return '⛽';
+        return this.brandstof_omschrijving === 'Elektriciteit' ? '⚡' : '⛽';
     }
 }
