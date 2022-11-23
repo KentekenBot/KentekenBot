@@ -20,7 +20,7 @@ export class Sightings {
         const sightingData = await Sighting.findAndCountAll({
             limit,
             order: [['createdAt', 'DESC']],
-            where: where,
+            where,
         });
 
         if (sightingData.count === 0) {
