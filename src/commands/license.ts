@@ -6,6 +6,7 @@ import { License as LicenseUtil } from '../util/license';
 import { MessageActionRow, MessageButton, MessageEmbed } from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
+import { DateTime } from '../util/date-time';
 
 export class License extends BaseCommand implements ICommand {
     public async handle(): Promise<void> {
@@ -41,7 +42,7 @@ export class License extends BaseCommand implements ICommand {
         const meta = [
             `🎨 ${Str.toTitleCase(vehicle.eerste_kleur)}`,
             vehicle.getPriceDescription(),
-            `🗓️ ${vehicle.getConstructionYear()}`,
+            `🗓️ ${DateTime.getDiscordTimestamp(vehicle.getConstructionDateTimestamp())}`,
         ];
 
         const description = fuelDescription.join('  -  ') + '\n' + meta.join('  -  ');
