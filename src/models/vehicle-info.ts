@@ -52,11 +52,7 @@ export class VehicleInfo extends BaseModel {
         const rdw = new OpenRdw();
         const data = await rdw.getVehicleInfo(license);
 
-        if (!data) {
-            return null;
-        }
-
-        return new VehicleInfo(data);
+        return data ? new VehicleInfo(data[0]) : null;
     }
 
     public getConstructionYear() {
@@ -64,10 +60,6 @@ export class VehicleInfo extends BaseModel {
     }
 
     public getPrice(): null | number {
-        if (!this.catalogusprijs) {
-            return null;
-        }
-
-        return parseInt(this.catalogusprijs);
+        return this.catalogusprijs ? parseInt(this.catalogusprijs) : null;
     }
 }
