@@ -20,9 +20,12 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
-        const data = await Promise.all([VehicleInfo.get(license), FuelInfo.get(license), Sightings.list(license)]);
+        const [vehicle, fuelInfo, sightings] = await Promise.all([
+            VehicleInfo.get(license),
+            FuelInfo.get(license),
+            Sightings.list(license),
+        ]);
 
-        const vehicle = data[0];
         if (!vehicle) {
             this.reply('Ik kon dat kenteken niet vindn kerol');
 
@@ -31,7 +34,7 @@ export class License extends BaseCommand implements ICommand {
         }
 
         const fuelDescription: string[] = [];
-        data[1].engines.forEach((engine) => {
+        fuelInfo.engines.forEach((engine) => {
             fuelDescription.push(engine.getHorsePowerDescription());
         });
 
@@ -49,7 +52,6 @@ export class License extends BaseCommand implements ICommand {
             .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicle.merk)}.png`)
             .setFooter({ text: LicenseUtil.format(license) });
 
-        const sightings = data[2];
         if (sightings) {
             response.addField('Eerder gespot door', sightings);
         }
