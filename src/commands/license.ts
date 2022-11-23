@@ -24,13 +24,13 @@ export class License extends BaseCommand implements ICommand {
         const [vehicle, fuelInfo, sightings] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
-            Sightings.list(license),
+            Sightings.list(license, this.message.guildId),
         ]);
 
         if (!vehicle) {
             this.reply('Ik kon dat kenteken niet vindn kerol');
 
-            Sightings.insert(license, this.message.author);
+            Sightings.insert(license, this.message.author, this.message.guild);
             return;
         }
 
@@ -70,6 +70,6 @@ export class License extends BaseCommand implements ICommand {
 
         this.reply({ embeds: [response], components: [links] });
 
-        Sightings.insert(license, this.message.author);
+        Sightings.insert(license, this.message.author, this.message.guild);
     }
 }
