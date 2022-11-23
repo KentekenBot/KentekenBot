@@ -57,7 +57,19 @@ export class VehicleInfo extends BaseModel {
     }
 
     public getConstructionYear() {
-        return this.datum_eerste_toelating.substring(0, 4);
+        return parseInt(this.datum_eerste_toelating.substring(0, 4));
+    }
+
+    public getConstructionMonth() {
+        return parseInt(this.datum_eerste_toelating.substring(4, 6));
+    }
+
+    public getConstructionDay() {
+        return parseInt(this.datum_eerste_toelating.substring(6, 8));
+    }
+
+    public getConstructionDateTimestamp() {
+        return new Date(this.getConstructionYear(), this.getConstructionMonth(), this.getConstructionDay()).getTime();
     }
 
     public getPrice(): null | number {
