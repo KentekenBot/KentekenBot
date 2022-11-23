@@ -1,5 +1,6 @@
 import { OpenRdw } from '../services/open-rdw';
 import { BaseModel } from './base-model';
+import { formatCurrency } from '../util/format-currency';
 
 export class VehicleInfo extends BaseModel {
     public kenteken = '';
@@ -61,5 +62,14 @@ export class VehicleInfo extends BaseModel {
 
     public getPrice(): null | number {
         return this.catalogusprijs ? parseInt(this.catalogusprijs) : null;
+    }
+
+    public getPriceDescription(): string {
+        const price = this.getPrice();
+        if (!price) {
+            return '💵 Onbekende catalogusprijs';
+        }
+
+        return `💵 ${formatCurrency(price)}`;
     }
 }
