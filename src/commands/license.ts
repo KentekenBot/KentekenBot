@@ -15,13 +15,17 @@ export class License extends BaseCommand implements ICommand {
         }
 
         const license = input.toUpperCase().split('-').join('');
-
         if (!LicenseUtil.isValid(license)) {
             this.reply('Dat is geen kenteken kut');
             return;
         }
 
-        const vehicle = await VehicleInfo.get(license);
+        const [vehicle, fuelInfo, sightings] = await Promise.all([
+            VehicleInfo.get(license),
+            FuelInfo.get(license),
+            Sightings.list(license),
+        ]);
+
         if (!vehicle) {
             this.reply('Ik kon dat kenteken niet vindn kerol');
 
@@ -29,12 +33,9 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
-        const fuelInfo = await FuelInfo.get(license);
-
-        const fuelDiscription: string[] = [];
-
+        const fuelDescription: string[] = [];
         fuelInfo.engines.forEach((engine) => {
-            fuelDiscription.push(engine.getHorsePowerDescription());
+            fuelDescription.push(engine.getHorsePowerDescription());
         });
 
         const meta = [
@@ -43,7 +44,7 @@ export class License extends BaseCommand implements ICommand {
             `🗓️  ${vehicle.getConstructionYear()}`,
         ];
 
-        const description = fuelDiscription.join('  -  ') + '\n' + meta.join('  -  ');
+        const description = fuelDescription.join('  -  ') + '\n' + meta.join('  -  ');
 
         const response = new MessageEmbed()
             .setTitle(`${Str.toTitleCase(vehicle.merk)} ${Str.toTitleCase(vehicle.handelsbenaming)}`)
@@ -51,12 +52,9 @@ export class License extends BaseCommand implements ICommand {
             .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicle.merk)}.png`)
             .setFooter({ text: LicenseUtil.format(license) });
 
-        const sightings = await Sightings.list(license);
         if (sightings) {
             response.addField('Eerder gespot door', sightings);
         }
-
-        Sightings.insert(license, this.message.author);
 
         const links = new MessageActionRow().addComponents(
             new MessageButton()
@@ -70,5 +68,7 @@ export class License extends BaseCommand implements ICommand {
         );
 
         this.reply({ embeds: [response], components: [links] });
+
+        Sightings.insert(license, this.message.author);
     }
 }
