@@ -1,6 +1,4 @@
-import { Sequelize } from 'sequelize';
+import { Options, Sequelize } from 'sequelize';
+import config from '../database/config.json';
 
-export const sequelizeConnection = new Sequelize({
-    storage: __dirname + '/../../kentekenbot.db',
-    dialect: 'sqlite',
-});
+export const sequelizeConnection = new Sequelize(config as Options);

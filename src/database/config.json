@@ -1,0 +1,4 @@
+{
+  "storage": "kentekenbot-migrated.db",
+  "dialect": "sqlite"
+}
