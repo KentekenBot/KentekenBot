@@ -11,7 +11,7 @@
     "lint": "eslint ./src --max-warnings=0 --ext .ts",
     "lint:fix": "eslint ./src --max-warnings=0 --ext .ts --fix",
     "prepare": "husky install",
-    "make:migration": "./script/create-migration.sh"
+    "migrate": "sequelize-cli db:migrate"
   },
   "author": "Kefkef123",
   "license": "ISC",
