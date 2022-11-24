@@ -10,7 +10,8 @@
     "test": "cross-env NODE_ICU_DATA=node_modules/full-icu jest",
     "lint": "eslint ./src --max-warnings=0 --ext .ts",
     "lint:fix": "eslint ./src --max-warnings=0 --ext .ts --fix",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "make:migration": "./script/create-migration.sh"
   },
   "author": "Kefkef123",
   "license": "ISC",
