@@ -1,5 +1,5 @@
 import { Sighting } from '../models/sighting';
-import { Guild, User } from 'discord.js';
+import { Guild, User, Util } from 'discord.js';
 import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 
@@ -32,7 +32,7 @@ export class Sightings {
             return `<@${sighting.discordUserId}> - ${DateTime.getDiscordTimestamp(
                 sighting.createdAt.getTime(),
                 DiscordTimestamps.RELATIVE
-            )}`;
+            )}${sighting.comment ? ' - ' + sighting.comment : ''}`;
         });
 
         const count = sightingData.count;
@@ -43,11 +43,12 @@ export class Sightings {
         return sightings.join('\n');
     }
 
-    public static insert(license: string, author: User, guild: Guild | null): void {
+    public static insert(license: string, author: User, guild: Guild | null, comment: null | string = null): void {
         Sighting.create({
             license,
             discordUserId: author.id,
             discordGuildId: guild?.id,
+            comment: comment ? Util.escapeMarkdown(comment) : null,
         });
     }
 }
