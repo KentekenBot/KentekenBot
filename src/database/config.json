@@ -1,0 +1,4 @@
+{
+  "storage": "kentekenbot.db",
+  "dialect": "sqlite"
+}

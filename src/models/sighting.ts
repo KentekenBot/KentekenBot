@@ -51,5 +51,3 @@ Sighting.init(
         sequelize: sequelizeConnection,
     }
 );
-
-Sighting.sync();
