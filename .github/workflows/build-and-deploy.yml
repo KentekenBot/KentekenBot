@@ -32,7 +32,7 @@ jobs:
       - name: Cleanup
         run: |
           npm run build
-          find . -maxdepth 1 -name ".*" -not -name "." -exec rm -rf {} \;
+          find . -maxdepth 1 -name ".*" -not -name "." -not -name ".sequelizerc" -exec rm -rf {} \;
           rm -rf src tests settings.json.example tsconfig.json readme.md babel.config.js
       - name: Deploy
         uses: burnett01/rsync-deployments@5.2
