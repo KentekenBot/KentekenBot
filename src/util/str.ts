@@ -14,4 +14,8 @@ export class Str {
     public static humanToSnakeCase(str: string): string {
         return str.toLowerCase().replace(/ /g, '_');
     }
+
+    public static limitCharacters(str: string, limit: number): string {
+        return str.length > limit ? str.substring(0, limit) : str;
+    }
 }

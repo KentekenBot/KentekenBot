@@ -31,7 +31,7 @@ export class License extends BaseCommand implements ICommand {
         if (!vehicle) {
             this.reply('Ik kon dat kenteken niet vindn kerol');
 
-            Sightings.insert(license, this.message.author, this.message.guild);
+            this.insertSighting(license);
             return;
         }
 
@@ -71,6 +71,17 @@ export class License extends BaseCommand implements ICommand {
 
         this.reply({ embeds: [response], components: [links] });
 
-        Sightings.insert(license, this.message.author, this.message.guild);
+        this.insertSighting(license);
+    }
+
+    private insertSighting(license: string): void {
+        Sightings.insert(license, this.message.author, this.message.guild, this.getComment());
+    }
+
+    private getComment(): string | null {
+        const args = this.getArguments();
+        args.shift();
+
+        return args?.join(' ') || null;
     }
 }
