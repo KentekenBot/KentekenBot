@@ -69,7 +69,11 @@ export class VehicleInfo extends BaseModel {
     }
 
     public getConstructionDateTimestamp() {
-        return new Date(this.getConstructionYear(), this.getConstructionMonth(), this.getConstructionDay()).getTime();
+        return new Date(
+            this.getConstructionYear(),
+            this.getConstructionMonth() - 1,
+            this.getConstructionDay()
+        ).getTime();
     }
 
     public getPrice(): null | number {
