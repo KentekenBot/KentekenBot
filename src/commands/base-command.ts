@@ -1,4 +1,4 @@
-import { Client, Message, MessagePayload, MessageOptions } from 'discord.js';
+import { Client, Message, MessageCreateOptions, MessagePayload } from 'discord.js';
 import { Settings } from '../services/settings';
 import { AvailableSettings } from '../enums/available-settings';
 
@@ -18,7 +18,7 @@ export abstract class BaseCommand {
         return data;
     }
 
-    protected reply(options: string | MessagePayload | MessageOptions): void {
+    protected reply(options: string | MessagePayload | MessageCreateOptions): void {
         this.message.channel.send(options);
     }
 }

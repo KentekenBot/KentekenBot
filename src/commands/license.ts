@@ -3,7 +3,7 @@ import { BaseCommand } from './base-command';
 import { VehicleInfo } from '../models/vehicle-info';
 import { Str } from '../util/str';
 import { License as LicenseUtil } from '../util/license';
-import { MessageActionRow, MessageButton, MessageEmbed } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle } from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
 import { DateTime } from '../util/date-time';
@@ -48,24 +48,24 @@ export class License extends BaseCommand implements ICommand {
 
         const description = fuelDescription.join('  -  ') + '\n' + meta.join('  -  ');
 
-        const response = new MessageEmbed()
+        const response = new EmbedBuilder()
             .setTitle(`${Str.toTitleCase(vehicle.merk)} ${Str.toTitleCase(vehicle.handelsbenaming)}`)
             .setDescription(description)
             .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicle.merk)}.png`)
             .setFooter({ text: LicenseUtil.format(license) });
 
         if (sightings) {
-            response.addField('Eerder gespot door', sightings);
+            response.addFields([{ name: 'Eerder gespot door:', value: sightings }]);
         }
 
-        const links = new MessageActionRow().addComponents(
-            new MessageButton()
+        const links = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
                 .setLabel('Kentekencheck')
-                .setStyle('LINK')
+                .setStyle(ButtonStyle.Link)
                 .setURL(`https://kentekencheck.nl/kenteken?i=${license}`),
-            new MessageButton()
+            new ButtonBuilder()
                 .setLabel('Finnik')
-                .setStyle('LINK')
+                .setStyle(ButtonStyle.Link)
                 .setURL(`https://finnik.nl/kenteken/${license}/gratis`)
         );
 
