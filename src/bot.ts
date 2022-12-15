@@ -1,4 +1,4 @@
-import { Client, Intents, Message } from 'discord.js';
+import { Client, Message, GatewayIntentBits } from 'discord.js';
 import { Settings } from './services/settings';
 import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
@@ -8,7 +8,9 @@ import { Status } from './commands/status';
 import { CommandConstructor } from './interfaces/command-constructor';
 
 export class Bot {
-    private client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+    private client = new Client({
+        intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+    });
     private commands?: Record<string, CommandConstructor>;
 
     public async liftOff(): Promise<void> {
