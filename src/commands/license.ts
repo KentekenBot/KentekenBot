@@ -3,15 +3,27 @@ import { BaseCommand } from './base-command';
 import { VehicleInfo } from '../models/vehicle-info';
 import { Str } from '../util/str';
 import { License as LicenseUtil } from '../util/license';
-import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle, SlashCommandBuilder } from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
 import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 
 export class License extends BaseCommand implements ICommand {
+    public register(builder: SlashCommandBuilder): SlashCommandBuilder {
+        builder
+            .setName('k')
+            .setDescription('Haal een kenteken op')
+            .addStringOption((option) => option.setName('kenteken').setDescription('Het kenteken').setRequired(true))
+            .addStringOption((option) =>
+                option.setName('commentaar').setDescription('Voeg commentaar toe aan je spot')
+            );
+
+        return builder;
+    }
+
     public async handle(): Promise<void> {
-        const input = this.getArguments()[0];
+        const input = this.getArgument<string>('kenteken');
         if (!input) {
             return;
         }
@@ -25,7 +37,7 @@ export class License extends BaseCommand implements ICommand {
         const [vehicle, fuelInfo, sightings] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
-            Sightings.list(license, this.message.guildId),
+            Sightings.list(license, this.interaction.guildId),
         ]);
 
         if (!vehicle) {
@@ -75,13 +87,10 @@ export class License extends BaseCommand implements ICommand {
     }
 
     private insertSighting(license: string): void {
-        Sightings.insert(license, this.message.author, this.message.guild, this.getComment());
+        Sightings.insert(license, this.interaction.user, this.interaction.guild, this.getComment());
     }
 
     private getComment(): string | null {
-        const args = this.getArguments();
-        args.shift();
-
-        return args?.join(' ') || null;
+        return this.getArgument<string>('commentaar') || null;
     }
 }
