@@ -10,14 +10,12 @@ export class Bot {
     });
 
     public async liftOff(): Promise<void> {
-        await this.login();
+        await Promise.all([this.login(), await CommandCollection.getInstance().register()]);
 
         this.client.on('ready', () => {
             Output.line(`Logged in as ${this.client.user?.tag}`);
-            this.client.user?.setActivity(`${Settings.get(AvailableSettings.COMMAND_PREFIX)}k <kenteken>`);
+            this.client.user?.setActivity(`/k <kenteken>`);
         });
-
-        await CommandCollection.getInstance().register();
 
         this.client.on('interactionCreate', async (interaction) => {
             this.handleInteraction(interaction);
