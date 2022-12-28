@@ -1,4 +1,4 @@
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
 import moment from 'moment';
@@ -13,5 +13,9 @@ export class Status extends BaseCommand implements ICommand {
         );
 
         this.reply({ embeds: [response] });
+    }
+
+    register(builder: SlashCommandBuilder): SlashCommandBuilder {
+        return builder.setName('status').setDescription('Bot status');
     }
 }

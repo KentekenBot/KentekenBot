@@ -1,30 +1,24 @@
-import { Client, Message, GatewayIntentBits } from 'discord.js';
+import { Client, GatewayIntentBits, Interaction } from 'discord.js';
 import { Settings } from './services/settings';
 import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
-import { License } from './commands/license';
-import { Ping } from './commands/ping';
-import { Status } from './commands/status';
-import { CommandConstructor } from './interfaces/command-constructor';
+import { CommandCollection } from './services/command-collection';
 
 export class Bot {
     private client = new Client({
         intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
     });
-    private commands?: Record<string, CommandConstructor>;
 
     public async liftOff(): Promise<void> {
-        await this.login();
+        await Promise.all([this.login(), await CommandCollection.getInstance().register()]);
 
         this.client.on('ready', () => {
             Output.line(`Logged in as ${this.client.user?.tag}`);
-            this.client.user?.setActivity(`${Settings.get(AvailableSettings.COMMAND_PREFIX)}k <kenteken>`);
+            this.client.user?.setActivity(`/k <kenteken>`);
         });
 
-        this.commands = this.getCommands();
-
-        this.client.on('messageCreate', (message) => {
-            this.onMessageReceived(message);
+        this.client.on('interactionCreate', async (interaction) => {
+            this.handleInteraction(interaction);
         });
     }
 
@@ -32,29 +26,19 @@ export class Bot {
         return this.client.login(Settings.get(AvailableSettings.TOKEN));
     }
 
-    private getCommands(): Record<string, CommandConstructor> {
-        return {
-            k: License,
-            ping: Ping,
-            status: Status,
-        };
-    }
-    private onMessageReceived(message: Message): void {
-        if (message.author.bot) {
+    private handleInteraction(interaction: Interaction): void {
+        if (!interaction.isCommand()) {
             return;
         }
 
-        if (!message.content.startsWith(Settings.get(AvailableSettings.COMMAND_PREFIX))) {
+        const commands = CommandCollection.getInstance();
+
+        const handlerClass = commands.getCommandHandler(interaction.commandName);
+        if (!handlerClass) {
+            interaction.reply('Oepsie woepsie, er is iets fout gegaan!');
             return;
         }
 
-        const usedCommand = message.content.replace(Settings.get(AvailableSettings.COMMAND_PREFIX), '').split(' ')[0];
-
-        if (!this.commands?.hasOwnProperty(usedCommand)) {
-            return;
-        }
-
-        const command = this.commands[usedCommand];
-        new command(message, this.client).handle();
+        new handlerClass().init(interaction, this.client).handle();
     }
 }

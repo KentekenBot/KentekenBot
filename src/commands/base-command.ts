@@ -1,24 +1,21 @@
-import { Client, Message, MessageCreateOptions, MessagePayload } from 'discord.js';
-import { Settings } from '../services/settings';
-import { AvailableSettings } from '../enums/available-settings';
+import { Client, CommandInteraction, InteractionReplyOptions, MessagePayload } from 'discord.js';
 
 export abstract class BaseCommand {
-    protected message: Message;
-    protected client: Client;
+    protected interaction!: CommandInteraction;
+    protected client!: Client;
 
-    public constructor(message: Message, client: Client) {
-        this.message = message;
+    public init(interaction: CommandInteraction, client: Client): this {
+        this.interaction = interaction;
         this.client = client;
+
+        return this;
     }
 
-    protected getArguments(): string[] {
-        const data = this.message.content.replace(Settings.get(AvailableSettings.COMMAND_PREFIX), '').split(' ');
-        data.shift();
-
-        return data;
+    protected getArgument<T>(name: string): T | undefined {
+        return (this.interaction?.options.get(name)?.value as unknown as T) || undefined;
     }
 
-    protected reply(options: string | MessagePayload | MessageCreateOptions): void {
-        this.message.channel.send(options);
+    protected reply(options: string | MessagePayload | InteractionReplyOptions): void {
+        this.interaction?.reply(options);
     }
 }
