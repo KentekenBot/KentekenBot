@@ -1,4 +1,5 @@
 {
+    "clientId": "CLIENT_ID",
     "token": "DISCORD_TOKEN",
     "commandPrefix": ";",
     "openDataToken": "OPEN_DATA_TOKEN",
