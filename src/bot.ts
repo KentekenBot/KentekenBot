@@ -6,7 +6,7 @@ import { License } from './commands/license';
 import { Ping } from './commands/ping';
 import { Status } from './commands/status';
 import { CommandConstructor } from './interfaces/command-constructor';
-
+import { Heartbeat } from './services/heartbeat';
 export class Bot {
     private client = new Client({
         intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
@@ -15,6 +15,8 @@ export class Bot {
 
     public async liftOff(): Promise<void> {
         await this.login();
+
+        this.startHeartbeat();
 
         this.client.on('ready', () => {
             Output.line(`Logged in as ${this.client.user?.tag}`);
@@ -26,6 +28,16 @@ export class Bot {
         this.client.on('messageCreate', (message) => {
             this.onMessageReceived(message);
         });
+    }
+
+    private startHeartbeat(): void {
+        const heartbeatUrl = Settings.get(AvailableSettings.HEARTBEAT_URL);
+
+        if (!heartbeatUrl) {
+            return;
+        }
+
+        new Heartbeat(heartbeatUrl, 1000);
     }
 
     private login(): Promise<string> {
