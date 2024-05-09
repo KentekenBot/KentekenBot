@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Interaction } from 'discord.js';
 import { Settings } from './services/settings';
 import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
+import { Heartbeat } from './services/heartbeat';
 import { CommandCollection } from './services/command-collection';
 
 export class Bot {
@@ -12,6 +13,8 @@ export class Bot {
     public async liftOff(): Promise<void> {
         await Promise.all([this.login(), await CommandCollection.getInstance().register()]);
 
+        this.startHeartbeat();
+
         this.client.on('ready', () => {
             Output.line(`Logged in as ${this.client.user?.tag}`);
             this.client.user?.setActivity(`/k <kenteken>`);
@@ -20,6 +23,16 @@ export class Bot {
         this.client.on('interactionCreate', async (interaction) => {
             this.handleInteraction(interaction);
         });
+    }
+
+    private startHeartbeat(): void {
+        const heartbeatUrl = Settings.get(AvailableSettings.HEARTBEAT_URL);
+
+        if (!heartbeatUrl) {
+            return;
+        }
+
+        new Heartbeat(heartbeatUrl, 1000);
     }
 
     private login(): Promise<string> {
