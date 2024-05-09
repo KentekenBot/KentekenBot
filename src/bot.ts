@@ -32,7 +32,7 @@ export class Bot {
             return;
         }
 
-        new Heartbeat(heartbeatUrl, 1000);
+        new Heartbeat(heartbeatUrl, 1000 * 60);
     }
 
     private login(): Promise<string> {
