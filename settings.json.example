@@ -3,5 +3,5 @@
     "token": "DISCORD_TOKEN",
     "commandPrefix": ";",
     "openDataToken": "OPEN_DATA_TOKEN",
-    "heartbeatUrl": "HEARTBEAT_URL",
+    "heartbeatUrl": "HEARTBEAT_URL"
 }

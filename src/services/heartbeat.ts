@@ -7,6 +7,8 @@ export class Heartbeat {
     }
 
     private beat(): void {
+        console.log('heartbeat');
+
         get(this.endpoint, (res) => {
             const { statusCode } = res;
             if (statusCode !== 200) {
