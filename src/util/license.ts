@@ -3,6 +3,10 @@ export class License {
         return this.getLicenseRegex().test(license);
     }
 
+    public static isNorwegian(license: string) {
+        return new RegExp(/[A-Z]{2} ?\d{5}/, 'i').test(license);
+    }
+
     public static getLicenseRegex(): RegExp {
         const variations = [
             '([A-Z]{2})-?([0-9]{2})-?([0-9]{2})',
