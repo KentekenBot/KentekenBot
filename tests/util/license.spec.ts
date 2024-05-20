@@ -56,3 +56,10 @@ describe('License util class isValid method', () => {
         expect(License.isValid('X-999-XXX')).toBeFalsy();
     });
 });
+
+describe('License util class check state', () => {
+    it('should recognise norwegian licenses', function () {
+        expect(License.isNorwegian('aa99999')).toBe(true);
+        expect(License.isNorwegian('x999xx')).toBe(false);
+    });
+});

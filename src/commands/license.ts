@@ -8,6 +8,7 @@ import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
 import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
+import { calculateHorsePower } from '../util/calulate-horse-power';
 
 export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -29,6 +30,12 @@ export class License extends BaseCommand implements ICommand {
         }
 
         const license = input.toUpperCase().split('-').join('');
+
+        if (LicenseUtil.isNorwegian(license)) {
+            this.getNorwegianInfo(license);
+            return;
+        }
+
         if (!LicenseUtil.isValid(license)) {
             this.reply('Dat is geen kenteken kut');
             return;
@@ -92,5 +99,40 @@ export class License extends BaseCommand implements ICommand {
 
     private getComment(): string | null {
         return this.getArgument<string>('commentaar') || null;
+    }
+
+    protected async getNorwegianInfo(license: string) {
+        const repsone = await fetch(
+            `https://kjoretoyoppslag.atlas.vegvesen.no/ws/no/vegvesen/kjoretoy/kjoretoyoppslag/v1/oppslag/raw/${license}`
+        );
+
+        const data = await repsone.json();
+
+        const brand = Str.toTitleCase(
+            data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.generelt.merke[0].merke
+        );
+        const model = Str.toTitleCase(
+            data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.generelt.handelsbetegnelse[0]
+        );
+
+        const engines = data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.motorOgDrivverk.motor;
+
+        const meta: string[] = [];
+
+        engines.forEach((engine) => {
+            const emoji = engine.drivstoff[0].drivstoffKode.kodeNavn === 'Elektrisk' ? '⚡' : '⛽';
+
+            meta.push(`${emoji} ${calculateHorsePower(engine.drivstoff[0].maksNettoEffekt)}PK`);
+        });
+
+        const description = meta.join('  -  ');
+
+        const response = new EmbedBuilder()
+            .setTitle(`${Str.toTitleCase(brand)} ${Str.toTitleCase(model)}`)
+            .setDescription(description)
+            .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(brand)}.png`)
+            .setFooter({ text: `🇳🇴 ${license}` });
+
+        this.reply({ embeds: [response] });
     }
 }
