@@ -9,6 +9,7 @@ import { FuelInfo } from '../models/fuel-info';
 import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { calculateHorsePower } from '../util/calulate-horse-power';
+import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen';
 
 export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -106,7 +107,7 @@ export class License extends BaseCommand implements ICommand {
             `https://kjoretoyoppslag.atlas.vegvesen.no/ws/no/vegvesen/kjoretoy/kjoretoyoppslag/v1/oppslag/raw/${license}`
         );
 
-        const data = await repsone.json();
+        const data: StatensVegvesenFullData = await repsone.json();
 
         const brand = Str.toTitleCase(
             data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.generelt.merke[0].merke
@@ -117,15 +118,24 @@ export class License extends BaseCommand implements ICommand {
 
         const engines = data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.motorOgDrivverk.motor;
 
-        const meta: string[] = [];
+        const fuelDescription: string[] = [];
 
         engines.forEach((engine) => {
             const emoji = engine.drivstoff[0].drivstoffKode.kodeNavn === 'Elektrisk' ? '⚡' : '⛽';
 
-            meta.push(`${emoji} ${calculateHorsePower(engine.drivstoff[0].maksNettoEffekt)}PK`);
+            fuelDescription.push(`${emoji} ${calculateHorsePower(engine.drivstoff[0].maksNettoEffekt)}PK`);
         });
 
-        const description = meta.join('  -  ');
+        const meta = [
+            `🗓️ ${DateTime.getDiscordTimestamp(
+                new Date(data.kjoretoy.godkjenning.forstegangsGodkjenning.forstegangRegistrertDato).getTime(),
+                DiscordTimestamps.SHORT_DATE
+            )}`,
+        ];
+
+        const description = fuelDescription.join('  -  ') + '\n' + meta.join('  -  ');
+
+        // forstegangRegistrertDato
 
         const response = new EmbedBuilder()
             .setTitle(`${Str.toTitleCase(brand)} ${Str.toTitleCase(model)}`)
