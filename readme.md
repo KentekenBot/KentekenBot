@@ -47,3 +47,7 @@ Start the bot
   npm run dev
 ```
 
+Optionally you can remove the heartbeat url from the config.
+
+When you run the bot for the first time the slash commands might not show instantly. 
+After a minute refresh your Discord client and it should show up.
