@@ -23,10 +23,22 @@ Install dependencies
   npm ci
 ```
 
-Setup settings and create empty db
+Setup settings
+
 ```bash
   cp settings.json.example settings.json
+```
+
+Create empty db (on Windows just make an empty file yourself)
+
+```bash
   touch kentekenbot.db
+```
+
+Run the database migrations
+
+```bash
+  npx sequelize-cli db:migrate
 ```
 
 Start the bot

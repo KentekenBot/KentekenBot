@@ -1,5 +1,5 @@
 import { Sighting } from '../models/sighting';
-import { escapeMarkdown, Guild, User } from 'discord.js';
+import { Channel, escapeMarkdown, Guild, User } from 'discord.js';
 import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { Str } from '../util/str';
@@ -30,10 +30,19 @@ export class Sightings {
         }
 
         const sightings = sightingData.rows.map((sighting) => {
-            const text = [
-                `<@${sighting.discordUserId}>`,
-                DateTime.getDiscordTimestamp(sighting.createdAt.getTime(), DiscordTimestamps.RELATIVE),
-            ];
+            const text = [`<@${sighting.discordUserId}>`];
+
+            const timestampText = DateTime.getDiscordTimestamp(
+                sighting.createdAt.getTime(),
+                DiscordTimestamps.RELATIVE
+            );
+            if (sighting.discordChannelId && sighting.discordInteractionId) {
+                text.push(
+                    `[${timestampText}](https://discordapp.com/channels/${sighting.discordGuildId}/${sighting.discordChannelId}/${sighting.discordInteractionId})`
+                );
+            } else {
+                text.push(timestampText);
+            }
 
             if (sighting.comment) {
                 text.push(`_${Str.limitCharacters(sighting.comment, 100)}_`);
@@ -50,11 +59,20 @@ export class Sightings {
         return sightings.join('\n');
     }
 
-    public static insert(license: string, author: User, guild: Guild | null, comment: null | string = null): void {
+    public static insert(
+        license: string,
+        author: User,
+        interactionId: string,
+        channel: Channel | null,
+        guild: Guild | null,
+        comment: null | string = null
+    ): void {
         Sighting.create({
             license,
             discordUserId: author.id,
             discordGuildId: guild?.id,
+            discordChannelId: channel?.id,
+            discordInteractionId: interactionId,
             comment: comment ? Str.limitCharacters(escapeMarkdown(comment), 255) : null,
         });
     }
