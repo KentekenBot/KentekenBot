@@ -23,10 +23,22 @@ Install dependencies
   npm ci
 ```
 
-Setup settings and create empty db
+Setup settings
+
 ```bash
   cp settings.json.example settings.json
+```
+
+Create empty db (on Windows just make an empty file yourself)
+
+```bash
   touch kentekenbot.db
+```
+
+Run the database migrations
+
+```bash
+  npx sequelize-cli db:migrate
 ```
 
 Start the bot
@@ -35,3 +47,7 @@ Start the bot
   npm run dev
 ```
 
+Optionally you can remove the heartbeat url from the config.
+
+When you run the bot for the first time the slash commands might not show instantly. 
+After a minute refresh your Discord client and it should show up.

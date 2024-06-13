@@ -17,10 +17,13 @@ export class OpenRdw {
     }
 
     private getRequestOptions() {
-        return {
-            headers: {
-                'X-App-Token': Settings.get(AvailableSettings.OPEN_DATA_TOKEN),
-            },
-        };
+        const token = Settings.get(AvailableSettings.OPEN_DATA_TOKEN);
+        const headers: Record<string, string> = {};
+
+        if (token) {
+            headers['X-App-Token'] = token;
+        }
+
+        return { headers };
     }
 }

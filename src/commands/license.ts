@@ -95,7 +95,14 @@ export class License extends BaseCommand implements ICommand {
     }
 
     private insertSighting(license: string): void {
-        Sightings.insert(license, this.interaction.user, this.interaction.guild, this.getComment());
+        Sightings.insert(
+            license,
+            this.interaction.user,
+            this.interaction.id,
+            this.interaction.channel,
+            this.interaction.guild,
+            this.getComment()
+        );
     }
 
     private getComment(): string | null {

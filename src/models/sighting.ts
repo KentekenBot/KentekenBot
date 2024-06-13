@@ -6,6 +6,8 @@ interface SightingAttributes {
     license?: string;
     discordUserId?: string;
     discordGuildId?: string;
+    discordChannelId?: string;
+    discordInteractionId?: string;
     updatedAt?: Date;
     createdAt?: Date;
     comment: string | null;
@@ -16,6 +18,8 @@ export class Sighting extends Model<SightingAttributes, UserInput> implements Si
     createdAt!: Date;
     discordUserId!: string;
     discordGuildId!: string;
+    discordChannelId!: string;
+    discordInteractionId!: string;
     license!: string;
     id!: number;
     updatedAt!: Date;
@@ -37,6 +41,12 @@ Sighting.init(
             type: DataTypes.STRING,
         },
         discordGuildId: {
+            type: DataTypes.STRING,
+        },
+        discordChannelId: {
+            type: DataTypes.STRING,
+        },
+        discordInteractionId: {
             type: DataTypes.STRING,
         },
         comment: {
