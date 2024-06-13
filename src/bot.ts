@@ -6,9 +6,7 @@ import { Heartbeat } from './services/heartbeat';
 import { CommandCollection } from './services/command-collection';
 
 export class Bot {
-    private client = new Client({
-        intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
-    });
+    private client = new Client();
 
     public async liftOff(): Promise<void> {
         await Promise.all([this.login(), await CommandCollection.getInstance().register()]);
