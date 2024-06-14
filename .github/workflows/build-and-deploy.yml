@@ -40,81 +40,16 @@ jobs:
           name: bot
           path: ./release.zip
 
-
   deploy-to-testing:
-    name: 'Deploy to testing'
-    runs-on: ubuntu-latest
+    name: Deploy to testing
+    uses: ./deploy.yml
+    with:
+      environment: Testing
     needs: build
-    environment: Testing
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: bot
-      - name: Unzip artifact
-        run: unzip release.zip
-      - name: Create environment setting
-        run: |
-          sed -i 's/CLIENT_ID/${{ secrets.CLIENT_ID }}/g' settings.json
-          sed -i 's/DISCORD_TOKEN/${{ secrets.DISCORD_TOKEN }}/g' settings.json
-          sed -i 's/OPEN_DATA_TOKEN/${{ secrets.OPEN_DATA_TOKEN }}/g' settings.json
-          sed -i 's/HEARTBEAT_URL/${{ secrets.HEARTBEAT_URL }}/g' settings.json
-      - name: Deploy
-        uses: burnett01/rsync-deployments@5.2
-        with:
-          switches: -avzr --delete --exclude kentekenbot.db
-          remote_path: ${{ secrets.DEPLOY_PATH }}
-          remote_host: ${{ secrets.DEPLOY_HOST }}
-          remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_KEY }}
-      - name: Post deploy
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          script: |
-            export NVM_DIR=~/.nvm
-            source ~/.nvm/nvm.sh
-            cd ${{ secrets.DEPLOY_PATH }}
-            npx sequelize-cli db:migrate:status | grep -q 'down' && cd script && ./backup-db.sh && ../ && npx sequelize-cli db:migrate
-            pm2 reload kentekenbot
 
   deploy-to-production:
-    name: 'Deploy to production'
-    runs-on: ubuntu-latest
+    name: Deploy to production
+    uses: ./deploy.yml
+    with:
+      environment: Production
     needs: deploy-to-testing
-    environment: Production
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: bot
-      - name: Unzip artifact
-        run: unzip release.zip
-      - name: Create environment setting
-        run: |
-          sed -i 's/CLIENT_ID/${{ secrets.CLIENT_ID }}/g' settings.json
-          sed -i 's/DISCORD_TOKEN/${{ secrets.DISCORD_TOKEN }}/g' settings.json
-          sed -i 's/OPEN_DATA_TOKEN/${{ secrets.OPEN_DATA_TOKEN }}/g' settings.json
-          sed -i 's/HEARTBEAT_URL/${{ secrets.HEARTBEAT_URL }}/g' settings.json
-      - name: Deploy
-        uses: burnett01/rsync-deployments@5.2
-        with:
-          switches: -avzr --delete --exclude kentekenbot.db
-          remote_path: ${{ secrets.DEPLOY_PATH }}
-          remote_host: ${{ secrets.DEPLOY_HOST }}
-          remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_KEY }}
-      - name: Post deploy
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          script: |
-            export NVM_DIR=~/.nvm
-            source ~/.nvm/nvm.sh
-            cd ${{ secrets.DEPLOY_PATH }}
-            npx sequelize-cli db:migrate:status | grep -q 'down' && cd script && ./backup-db.sh && ../ && npx sequelize-cli db:migrate
-            pm2 reload kentekenbot
