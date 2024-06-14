@@ -1,6 +1,7 @@
 const { resolve } = require('path');
+const fs = require('fs');
 
 module.exports = {
-    config: resolve('config.json'),
+    config: fs.existsSync('src/config.json') ? resolve('src/config.json') :  resolve('dist/config.json'),
     'migrations-path': resolve('database/migrations'),
 };
