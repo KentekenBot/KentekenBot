@@ -19,7 +19,7 @@ jobs:
           name: bot
       - name: Unzip artifact
         run: unzip release.zip
-      - name: Cleaup artifact
+      - name: Cleanup artifacts
         run: rm release.zip
       - name: Create environment setting
         run: |
