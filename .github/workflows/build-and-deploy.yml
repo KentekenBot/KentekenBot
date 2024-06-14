@@ -42,14 +42,14 @@ jobs:
 
   deploy-to-testing:
     name: Deploy to testing
-    uses: ./deploy.yml
+    uses: ./.github/workflows/deploy.yml
     with:
       environment: Testing
     needs: build
 
   deploy-to-production:
     name: Deploy to production
-    uses: ./deploy.yml
+    uses: ./.github/workflows/deploy.yml
     with:
       environment: Production
     needs: deploy-to-testing
