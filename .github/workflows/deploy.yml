@@ -10,7 +10,6 @@ on:
 jobs:
   deploy:
     name: Deploy
-    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
       - name: Download artifact

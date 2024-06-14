@@ -45,6 +45,7 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: 'Testing'
+    secrets: inherit
     needs: build
 
   deploy-to-production:
@@ -52,4 +53,5 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: 'Production'
+    secrets: inherit
     needs: deploy-to-testing
