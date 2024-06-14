@@ -24,6 +24,9 @@ jobs:
           sed -i 's/DISCORD_TOKEN/${{ secrets.DISCORD_TOKEN }}/g' settings.json
           sed -i 's/OPEN_DATA_TOKEN/${{ secrets.OPEN_DATA_TOKEN }}/g' settings.json
           sed -i 's/HEARTBEAT_URL/${{ secrets.HEARTBEAT_URL }}/g' settings.json
+      - name: test secrets
+        run: |
+          echo ${{ secrets.DEPLOY_USER }}    
       - name: Deploy
         uses: burnett01/rsync-deployments@5.2
         with:
