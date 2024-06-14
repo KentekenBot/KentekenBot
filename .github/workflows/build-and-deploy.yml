@@ -44,6 +44,7 @@ jobs:
   deploy-to-testing:
     name: 'Deploy to testing'
     runs-on: ubuntu-latest
+    needs: build
     environment: Testing
     steps:
       - name: Download artifact
@@ -82,6 +83,7 @@ jobs:
   deploy-to-production:
     name: 'Deploy to production'
     runs-on: ubuntu-latest
+    needs: deploy-to-testing
     environment: Production
     steps:
       - name: Download artifact
