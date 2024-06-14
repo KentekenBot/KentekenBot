@@ -19,6 +19,8 @@ jobs:
           name: bot
       - name: Unzip artifact
         run: unzip release.zip
+      - name: Cleaup artifact
+        run: rm release.zip
       - name: Create environment setting
         run: |
           sed -i 's/CLIENT_ID/${{ secrets.CLIENT_ID }}/g' settings.json
