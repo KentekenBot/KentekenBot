@@ -2,6 +2,8 @@
 
 A Discord bot that allows you to get info from Dutch license plates using commands.
 
+- **[Click here to invite the bot](https://discord.com/oauth2/authorize?client_id=734842157596409920&permissions=274878220352&scope=applications.commands%20bot)**
+- Support and updates: https://discord.gg/ckDtykKD8a
 
 ## Run Locally
 
