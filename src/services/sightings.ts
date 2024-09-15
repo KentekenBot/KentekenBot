@@ -65,7 +65,8 @@ export class Sightings {
         interactionId: string,
         channelId: string | null,
         guild: Guild | null,
-        comment: null | string = null
+        comment: null | string = null,
+        vehicleId: number | null
     ): void {
         Sighting.create({
             license,
@@ -74,6 +75,7 @@ export class Sightings {
             discordChannelId: channelId ?? undefined,
             discordInteractionId: interactionId,
             comment: comment ? Str.limitCharacters(escapeMarkdown(comment), 255) : null,
+            vehicleId: vehicleId ?? null,
         });
     }
 }

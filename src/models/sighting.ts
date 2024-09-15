@@ -1,8 +1,10 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelizeConnection } from '../services/sequelize';
+import { Vehicle } from './vehicle';
 
 interface SightingAttributes {
     id: number;
+    vehicleId: number | null;
     license?: string;
     discordUserId?: string;
     discordGuildId?: string;
@@ -22,8 +24,16 @@ export class Sighting extends Model<SightingAttributes, UserInput> implements Si
     discordInteractionId!: string;
     license!: string;
     id!: number;
+    vehicleId!: number;
     updatedAt!: Date;
     comment!: string | null;
+
+    static associate() {
+        Sighting.belongsTo(Vehicle, {
+            foreignKey: 'vehicleId',
+            as: 'vehicle',
+        });
+    }
 }
 
 Sighting.init(
@@ -32,6 +42,10 @@ Sighting.init(
             allowNull: false,
             autoIncrement: true,
             primaryKey: true,
+            type: DataTypes.INTEGER,
+        },
+        vehicleId: {
+            allowNull: true,
             type: DataTypes.INTEGER,
         },
         license: {
