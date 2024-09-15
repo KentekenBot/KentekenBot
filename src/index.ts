@@ -1,6 +1,6 @@
 import { Bot } from './bot';
 import { sequelizeConnection } from './services/sequelize';
-import './models'; // This will ensure models are imported and associations are set up
+import './models';
 
 sequelizeConnection
     .authenticate()
