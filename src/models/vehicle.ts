@@ -18,6 +18,7 @@ interface VehicleAttributes {
     totalHorsepower: string | null;
     primaryFuelType: string | null;
     secondaryFuelType: string | null;
+    country: string;
 }
 export type UserInput = Optional<VehicleAttributes, 'id'>;
 
@@ -37,6 +38,7 @@ export class Vehicle extends Model<VehicleAttributes, UserInput> implements Vehi
     totalHorsepower!: string | null;
     primaryFuelType!: string | null;
     secondaryFuelType!: string | null;
+    country!: string;
 
     static associate() {
         Vehicle.hasMany(Sighting, {
@@ -107,6 +109,10 @@ Vehicle.init(
         },
         secondaryFuelType: {
             allowNull: true,
+            type: DataTypes.STRING,
+        },
+        country: {
+            allowNull: false,
             type: DataTypes.STRING,
         },
     },

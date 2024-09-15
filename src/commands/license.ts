@@ -11,6 +11,7 @@ import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { calculateHorsePower } from '../util/calulate-horse-power';
 import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen';
 import { Vehicles } from '../services/vehicles';
+import { Vehicle } from '../models';
 
 export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -96,9 +97,9 @@ export class License extends BaseCommand implements ICommand {
 
         this.reply({ embeds: [response], components: [links] });
 
-        const vehicleId = await this.insertVehicle(vehicleInfo, fuelInfo);
+        const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
 
-        this.insertSighting(license, vehicleId);
+        this.insertSighting(license, vehicle.id);
     }
 
     private async insertSighting(license: string, vehicleId: number): Promise<void> {
@@ -113,8 +114,8 @@ export class License extends BaseCommand implements ICommand {
         );
     }
 
-    private async insertVehicle(vehicle: VehicleInfo, fuelInfo: FuelInfo): Promise<number> {
-        return await Vehicles.insert(vehicle, fuelInfo);
+    private async insertVehicle(vehicle: VehicleInfo, fuelInfo: FuelInfo, country: string): Promise<Vehicle> {
+        return await Vehicles.insert(vehicle, fuelInfo, country);
     }
 
     private getComment(): string | null {
