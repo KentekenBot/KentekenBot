@@ -32,7 +32,7 @@ jobs:
           sed -i 's/HEARTBEAT_URL/${{ secrets.HEARTBEAT_URL }}/g' settings.json  
 
       - name: Deploy
-        uses: burnett01/rsync-deployments@6
+        uses: burnett01/rsync-deployments@7.1.0
         with:
           switches: -avzr --delete --exclude kentekenbot.db
           remote_path: ${{ secrets.DEPLOY_PATH }}
