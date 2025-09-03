@@ -11,7 +11,8 @@ jobs:
     name: 'Build and deploy'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup npm cache
         uses: actions/cache@v4
@@ -20,38 +21,42 @@ jobs:
           key: ${{ runner.OS }}-npm-cache-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.OS }}-npm-cache-
+            
       - name: Install dependencies
         run: npm ci
+
       - name: Build bot
         run: |
           npm run build
           cp settings.json.example settings.json
+
       - name: Cleanup
         run: |
           npm run build
           find . -maxdepth 1 -name ".*" -not -name "." -not -name ".sequelizerc" -exec rm -rf {} \;
           rm -rf src tests settings.json.example tsconfig.json readme.md babel.config.js
+
       - name: Zip artifact
-        run: |
-          zip release.zip ./* -r    
+        run: zip release.zip ./* -r
+
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bot
           path: ./release.zip
 
   deploy-to-testing:
     name: Deploy to testing
+    needs: build
     uses: ./.github/workflows/deploy.yml
     with:
       environment: 'Testing'
     secrets: inherit
-    needs: build
 
   deploy-to-production:
     name: Deploy to production
+    needs: deploy-to-testing
     uses: ./.github/workflows/deploy.yml
     with:
       environment: 'Production'
     secrets: inherit
-    needs: deploy-to-testing

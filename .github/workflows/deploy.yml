@@ -14,27 +14,32 @@ jobs:
     environment: ${{ inputs.environment }}
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: bot
+
       - name: Unzip artifact
         run: unzip release.zip
+
       - name: Cleanup artifacts
         run: rm release.zip
+
       - name: Create environment setting
         run: |
           sed -i 's/CLIENT_ID/${{ secrets.CLIENT_ID }}/g' settings.json
           sed -i 's/DISCORD_TOKEN/${{ secrets.DISCORD_TOKEN }}/g' settings.json
           sed -i 's/OPEN_DATA_TOKEN/${{ secrets.OPEN_DATA_TOKEN }}/g' settings.json
           sed -i 's/HEARTBEAT_URL/${{ secrets.HEARTBEAT_URL }}/g' settings.json  
+
       - name: Deploy
-        uses: burnett01/rsync-deployments@5.2
+        uses: burnett01/rsync-deployments@6
         with:
           switches: -avzr --delete --exclude kentekenbot.db
           remote_path: ${{ secrets.DEPLOY_PATH }}
           remote_host: ${{ secrets.DEPLOY_HOST }}
           remote_user: ${{ secrets.DEPLOY_USER }}
           remote_key: ${{ secrets.DEPLOY_KEY }}
+
       - name: Post deploy
         uses: appleboy/ssh-action@master
         with:
