@@ -121,7 +121,7 @@ export class License extends BaseCommand implements ICommand {
     }
 
     private async insertVehicle(vehicle: VehicleInfo, fuelInfo: FuelInfo, country: string): Promise<Vehicle> {
-        return await Vehicles.insert(vehicle, fuelInfo, country);
+        return Vehicles.insert(vehicle, fuelInfo, country);
     }
 
     private getComment(): string | null {
