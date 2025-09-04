@@ -27,6 +27,8 @@ export class License extends BaseCommand implements ICommand {
     }
 
     public async handle(): Promise<void> {
+        await this.interaction.deferReply();
+
         const input = this.getArgument<string>('kenteken');
         if (!input) {
             return;
@@ -35,12 +37,12 @@ export class License extends BaseCommand implements ICommand {
         const license = input.toUpperCase().split('-').join('');
 
         if (LicenseUtil.isNorwegian(license)) {
-            this.getNorwegianInfo(license);
+            await this.getNorwegianInfo(license);
             return;
         }
 
         if (!LicenseUtil.isValid(license)) {
-            this.reply('Dat is geen kenteken kut');
+            await this.interaction.followUp('Dat is geen kenteken kut');
             return;
         }
 
@@ -95,7 +97,7 @@ export class License extends BaseCommand implements ICommand {
                 .setURL(`https://finnik.nl/kenteken/${license}/gratis`)
         );
 
-        this.reply({ embeds: [response], components: [links] });
+        await this.interaction.followUp({ embeds: [response], components: [links] });
 
         const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
 
@@ -163,6 +165,6 @@ export class License extends BaseCommand implements ICommand {
             .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(brand)}.png`)
             .setFooter({ text: `🇳🇴 ${license}` });
 
-        this.reply({ embeds: [response] });
+        await this.interaction.followUp({ embeds: [response] });
     }
 }
