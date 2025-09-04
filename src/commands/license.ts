@@ -83,7 +83,7 @@ export class License extends BaseCommand implements ICommand {
             .setFooter({ text: LicenseUtil.format(license) });
 
         if (sightings) {
-            response.addFields([{ name: 'Eerder gespot door:', value: sightings }]);
+            response.addFields([{ name: 'Eerder gespot door:', value: sightings.list }]);
         }
 
         const links = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -102,6 +102,10 @@ export class License extends BaseCommand implements ICommand {
         const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
 
         this.insertSighting(license, vehicle.id);
+
+        if (sightings?.needsUpdate) {
+            Sightings.updateVehicleIdForLicense(license, vehicle.id);
+        }
     }
 
     private async insertSighting(license: string, vehicleId: number): Promise<void> {
