@@ -5,7 +5,11 @@ import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { Str } from '../util/str';
 
 export class Sightings {
-    public static async list(license: string, discordGuildId: string | null, limit = 10): Promise<string | null> {
+    public static async list(
+        license: string,
+        discordGuildId: string | null,
+        limit = 10
+    ): Promise<{ list: string; needsUpdate: boolean } | null> {
         let where;
 
         if (discordGuildId != null) {
@@ -28,6 +32,8 @@ export class Sightings {
         if (sightingData.count === 0) {
             return null;
         }
+
+        const needsUpdate = sightingData.rows.some((sighting) => sighting.vehicleId === null);
 
         const sightings = sightingData.rows.map((sighting) => {
             const text = [`<@${sighting.discordUserId}>`];
@@ -56,7 +62,10 @@ export class Sightings {
             sightings.push(`En ${count - 10} andere ${count - 10 == 1 ? 'keer' : 'keren'} gespot.`);
         }
 
-        return sightings.join('\n');
+        return {
+            list: sightings.join('\n'),
+            needsUpdate,
+        };
     }
 
     public static insert(
@@ -65,7 +74,8 @@ export class Sightings {
         interactionId: string,
         channelId: string | null,
         guild: Guild | null,
-        comment: null | string = null
+        comment: null | string = null,
+        vehicleId: number | null
     ): void {
         Sighting.create({
             license,
@@ -74,6 +84,19 @@ export class Sightings {
             discordChannelId: channelId ?? undefined,
             discordInteractionId: interactionId,
             comment: comment ? Str.limitCharacters(escapeMarkdown(comment), 255) : null,
+            vehicleId: vehicleId ?? null,
         });
+    }
+
+    public static async updateVehicleIdForLicense(license: string, vehicleId: number): Promise<void> {
+        await Sighting.update(
+            { vehicleId },
+            {
+                where: {
+                    license,
+                    vehicleId: null,
+                },
+            }
+        );
     }
 }

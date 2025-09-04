@@ -10,6 +10,8 @@ import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { calculateHorsePower } from '../util/calulate-horse-power';
 import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen';
+import { Vehicles } from '../services/vehicles';
+import { Vehicle } from '../models';
 
 export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -44,16 +46,15 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
-        const [vehicle, fuelInfo, sightings] = await Promise.all([
+        const [vehicleInfo, fuelInfo, sightings] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
             Sightings.list(license, this.interaction.guildId),
         ]);
 
-        if (!vehicle) {
+        if (!vehicleInfo) {
             this.reply('Ik kon dat kenteken niet vindn kerol');
-
-            this.insertSighting(license);
+            await this.insertSighting(license, 0);
             return;
         }
 
@@ -63,21 +64,26 @@ export class License extends BaseCommand implements ICommand {
         });
 
         const meta = [
-            `🎨 ${Str.toTitleCase(vehicle.eerste_kleur)}`,
-            vehicle.getPriceDescription(),
-            `🗓️ ${DateTime.getDiscordTimestamp(vehicle.getConstructionDateTimestamp(), DiscordTimestamps.SHORT_DATE)}`,
+            `🎨 ${Str.toTitleCase(vehicleInfo.eerste_kleur)}`,
+            vehicleInfo.getPriceDescription(),
+            `🗓️ ${DateTime.getDiscordTimestamp(
+                vehicleInfo.getConstructionDateTimestamp(),
+                DiscordTimestamps.SHORT_DATE
+            )}`,
         ];
 
         const description = fuelDescription.join('  -  ') + '\n' + meta.join('  -  ');
 
         const response = new EmbedBuilder()
-            .setTitle(`${Str.toTitleCase(vehicle.merk)} ${Str.toTitleCase(vehicle.handelsbenaming)}`)
+            .setTitle(`${Str.toTitleCase(vehicleInfo.merk)} ${Str.toTitleCase(vehicleInfo.handelsbenaming)}`)
             .setDescription(description)
-            .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicle.merk)}.png`)
+            .setThumbnail(
+                `https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicleInfo.merk)}.png`
+            )
             .setFooter({ text: LicenseUtil.format(license) });
 
         if (sightings) {
-            response.addFields([{ name: 'Eerder gespot door:', value: sightings }]);
+            response.addFields([{ name: 'Eerder gespot door:', value: sightings.list }]);
         }
 
         const links = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -93,18 +99,29 @@ export class License extends BaseCommand implements ICommand {
 
         await this.interaction.followUp({ embeds: [response], components: [links] });
 
-        this.insertSighting(license);
+        const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
+
+        this.insertSighting(license, vehicle.id);
+
+        if (sightings?.needsUpdate) {
+            Sightings.updateVehicleIdForLicense(license, vehicle.id);
+        }
     }
 
-    private insertSighting(license: string): void {
-        Sightings.insert(
+    private async insertSighting(license: string, vehicleId: number): Promise<void> {
+        await Sightings.insert(
             license,
             this.interaction.user,
             this.interaction.id,
             this.interaction.channelId,
             this.interaction.guild,
-            this.getComment()
+            this.getComment(),
+            vehicleId
         );
+    }
+
+    private async insertVehicle(vehicle: VehicleInfo, fuelInfo: FuelInfo, country: string): Promise<Vehicle> {
+        return Vehicles.insert(vehicle, fuelInfo, country);
     }
 
     private getComment(): string | null {
