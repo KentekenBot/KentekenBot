@@ -53,15 +53,8 @@ export class License extends BaseCommand implements ICommand {
         ]);
 
         if (!vehicleInfo) {
-            if (sightings) {
-                const response = new EmbedBuilder()
-                    .setTitle(`Kenteken ${license} niet gevonden, rdw heeft m niet meer (rip)`)
-                    .addFields([{ name: 'Eerder gespot door:', value: sightings.list }])
-                    .setFooter({ text: LicenseUtil.format(license) });
-                await this.interaction.followUp({ embeds: [response] });
-            } else {
-                this.interaction.followUp('Ik kon dat kenteken niet vindn kerol');
-            }
+            this.reply('Ik kon dat kenteken niet vindn kerol');
+            await this.insertSighting(license, 0);
             return;
         }
 

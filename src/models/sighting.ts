@@ -17,16 +17,16 @@ interface SightingAttributes {
 export type UserInput = Optional<SightingAttributes, 'id'>;
 
 export class Sighting extends Model<SightingAttributes, UserInput> implements SightingAttributes {
-    declare createdAt: Date;
-    declare discordUserId: string;
-    declare discordGuildId: string;
-    declare discordChannelId: string;
-    declare discordInteractionId: string;
-    declare license: string;
-    declare id: number;
-    declare vehicleId: number;
-    declare updatedAt: Date;
-    declare comment: string | null;
+    createdAt!: Date;
+    discordUserId!: string;
+    discordGuildId!: string;
+    discordChannelId!: string;
+    discordInteractionId!: string;
+    license!: string;
+    id!: number;
+    vehicleId!: number;
+    updatedAt!: Date;
+    comment!: string | null;
 
     static associate() {
         Sighting.belongsTo(Vehicle, {
