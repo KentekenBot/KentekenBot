@@ -8,6 +8,7 @@ export class Sightings {
     public static async list(
         license: string,
         discordGuildId: string | null,
+        discordUserId: string,
         limit = 10
     ): Promise<{ list: string; needsUpdate: boolean } | null> {
         let where;
@@ -20,6 +21,7 @@ export class Sightings {
         } else {
             where = {
                 license: license,
+                discordUserId: discordUserId,
             };
         }
 
