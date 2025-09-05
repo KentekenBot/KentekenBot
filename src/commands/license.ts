@@ -3,7 +3,15 @@ import { BaseCommand } from './base-command';
 import { VehicleInfo } from '../models/vehicle-info';
 import { Str } from '../util/str';
 import { License as LicenseUtil } from '../util/license';
-import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, ButtonStyle, SlashCommandBuilder } from 'discord.js';
+import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    EmbedBuilder,
+    ButtonStyle,
+    SlashCommandBuilder,
+    InteractionContextType,
+    ApplicationIntegrationType,
+} from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
 import { DateTime } from '../util/date-time';
@@ -17,6 +25,12 @@ export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
         builder
             .setName('k')
+            .setContexts(
+                InteractionContextType.Guild,
+                InteractionContextType.BotDM,
+                InteractionContextType.PrivateChannel
+            )
+            .setIntegrationTypes(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)
             .setDescription('Haal een kenteken op')
             .addStringOption((option) => option.setName('kenteken').setDescription('Het kenteken').setRequired(true))
             .addStringOption((option) =>
@@ -49,7 +63,7 @@ export class License extends BaseCommand implements ICommand {
         const [vehicleInfo, fuelInfo, sightings] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
-            Sightings.list(license, this.interaction.guildId),
+            Sightings.list(license, this.interaction.guildId, this.interaction.user.id),
         ]);
 
         if (!vehicleInfo) {

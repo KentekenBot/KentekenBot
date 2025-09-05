@@ -1,7 +1,6 @@
 import { CommandConstructor } from '../interfaces/command-constructor';
 import { License } from '../commands/license';
-import { REST, Routes, SlashCommandBuilder } from 'discord.js';
-import { RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord-api-types/v10';
+import { REST, RESTPostAPIChatInputApplicationCommandsJSONBody, Routes, SlashCommandBuilder } from 'discord.js';
 import { AvailableSettings } from '../enums/available-settings';
 import { Settings } from './settings';
 import { Ping } from '../commands/ping';

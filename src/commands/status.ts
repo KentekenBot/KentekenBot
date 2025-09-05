@@ -1,4 +1,4 @@
-import { EmbedBuilder, SlashCommandBuilder } from 'discord.js';
+import { ApplicationIntegrationType, EmbedBuilder, InteractionContextType, SlashCommandBuilder } from 'discord.js';
 import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
 import moment from 'moment';
@@ -16,6 +16,14 @@ export class Status extends BaseCommand implements ICommand {
     }
 
     register(builder: SlashCommandBuilder): SlashCommandBuilder {
-        return builder.setName('status').setDescription('Bot status');
+        return builder
+            .setName('status')
+            .setContexts(
+                InteractionContextType.Guild,
+                InteractionContextType.BotDM,
+                InteractionContextType.PrivateChannel
+            )
+            .setIntegrationTypes(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)
+            .setDescription('Bot status');
     }
 }
