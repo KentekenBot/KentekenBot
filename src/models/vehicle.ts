@@ -23,22 +23,22 @@ interface VehicleAttributes {
 export type UserInput = Optional<VehicleAttributes, 'id'>;
 
 export class Vehicle extends Model<VehicleAttributes, UserInput> implements VehicleAttributes {
-    id!: number;
-    createdAt!: Date;
-    updatedAt!: Date;
-    dateFirstAllowed!: Date;
-    dateFirstRegistration!: Date;
-    license!: string;
-    brand!: string | null;
-    tradeName!: string | null;
-    price!: number | null;
-    vehicleType!: string | null;
-    interiorType!: string | null;
-    color!: string | null;
-    totalHorsepower!: string | null;
-    primaryFuelType!: string | null;
-    secondaryFuelType!: string | null;
-    country!: string;
+    declare id: number;
+    declare createdAt: Date;
+    declare updatedAt: Date;
+    declare dateFirstAllowed: Date;
+    declare dateFirstRegistration: Date;
+    declare license: string;
+    declare brand: string | null;
+    declare tradeName: string | null;
+    declare price: number | null;
+    declare vehicleType: string | null;
+    declare interiorType: string | null;
+    declare color: string | null;
+    declare totalHorsepower: string | null;
+    declare primaryFuelType: string | null;
+    declare secondaryFuelType: string | null;
+    declare country: string;
 
     static associate() {
         Vehicle.hasMany(Sighting, {
