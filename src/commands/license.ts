@@ -103,7 +103,7 @@ export class License extends BaseCommand implements ICommand {
             )
             .setFooter({ text: LicenseUtil.format(license) });
 
-        const comment = this.getArgument<string>('commentaar');
+        const comment = this.getComment();
         if (comment) {
             response.addFields([{ name: 'Commentaar:', value: comment }]);
         }
