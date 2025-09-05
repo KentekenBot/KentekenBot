@@ -1,10 +1,10 @@
-import { Client, CommandInteraction, InteractionReplyOptions, MessagePayload } from 'discord.js';
+import { ChatInputCommandInteraction, Client, InteractionReplyOptions, MessagePayload } from 'discord.js';
 
 export abstract class BaseCommand {
-    protected interaction!: CommandInteraction;
+    protected interaction!: ChatInputCommandInteraction;
     protected client!: Client;
 
-    public init(interaction: CommandInteraction, client: Client): this {
+    public init(interaction: ChatInputCommandInteraction, client: Client): this {
         this.interaction = interaction;
         this.client = client;
 

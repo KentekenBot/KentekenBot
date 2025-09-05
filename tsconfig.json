@@ -3,7 +3,7 @@
     "module": "commonjs",
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "target": "es6",
+    "target": "es2024",
     "moduleResolution": "node",
     "sourceMap": false,
     "outDir": "dist",
@@ -13,5 +13,5 @@
     "tests",
     "src/database/migrations"
   ],
-  "lib": ["es2015"]
+  "lib": ["es2024"]
 }

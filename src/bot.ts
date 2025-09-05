@@ -15,7 +15,7 @@ export class Bot {
 
         this.startHeartbeat();
 
-        this.client.on('ready', () => {
+        this.client.on('clientReady', () => {
             Output.line(`Logged in as ${this.client.user?.tag}`);
             this.client.user?.setActivity(`/k <kenteken>`);
         });
@@ -40,7 +40,7 @@ export class Bot {
     }
 
     private handleInteraction(interaction: Interaction): void {
-        if (!interaction.isCommand()) {
+        if (!interaction.isChatInputCommand()) {
             return;
         }
 
