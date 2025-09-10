@@ -23,6 +23,7 @@ export class License {
             '([A-Z])-?([0-9]{2})-?([A-Z]{3})',
             '([0-9])-?([A-Z]{2})-?([0-9]{3})',
             '([0-9]{3})-?([A-Z]{2})-?([0-9])',
+            '(AP)-?(DIE)',
         ].map((variation) => `(?:${variation})`);
 
         return new RegExp(`(?:${variations.join('|')})$`, 'i');
