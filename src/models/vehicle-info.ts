@@ -50,16 +50,6 @@ export class VehicleInfo extends BaseModel {
     }
 
     public static async get(license: string): Promise<VehicleInfo | null> {
-        if (license === 'APDIE') {
-            const customData = {
-                merk: 'Apdie',
-                eerste_kleur: 'Kaal',
-                catalogusprijs: '69420',
-            };
-
-            return new VehicleInfo(customData);
-        }
-
         const rdw = new OpenRdw();
         const data = await rdw.getVehicleInfo(license);
 
