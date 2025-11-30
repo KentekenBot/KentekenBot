@@ -38,4 +38,22 @@ export class License {
                 .toUpperCase() || ''
         );
     }
+
+    public static getVehicleType(license: string): string | null {
+        const firstChar = license.charAt(0).toUpperCase();
+
+        const vehicleTypes: { [key: string]: string } = {
+            'A': 'Koninklijk Huis',
+            'B': 'Zware bedrijfswagens',
+            'C': 'Corps Diplomatique',
+            'D': 'Bromfiets',
+            'F': 'Snorfiets',
+            'M': 'Motor',
+            'O': 'Oplegger',
+            'V': 'Lichte bedrijfswagens',
+            'W': 'Caravans of aanhanger > 750 kg.',
+        };
+
+        return vehicleTypes[firstChar] || null;
+    }
 }
