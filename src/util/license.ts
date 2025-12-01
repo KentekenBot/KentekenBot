@@ -40,7 +40,11 @@ export class License {
     }
 
     public static getVehicleType(license: string): string | null {
-        const firstChar = license.charAt(0).toUpperCase();
+        const firstLetter = license.match(/[A-Z]/i)?.[0]?.toUpperCase();
+
+        if (!firstLetter) {
+            return null;
+        }
 
         const vehicleTypes: { [key: string]: string } = {
             A: 'Koninklijk Huis',
@@ -54,6 +58,6 @@ export class License {
             W: 'Caravan of aanhanger > 750 kg.',
         };
 
-        return vehicleTypes[firstChar] || null;
+        return vehicleTypes[firstLetter] || null;
     }
 }
