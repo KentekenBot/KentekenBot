@@ -95,13 +95,16 @@ export class License extends BaseCommand implements ICommand {
 
         const description = fuelDescription.join('  -  ') + '\n' + meta.join('  -  ');
 
+        const formattedLicense = LicenseUtil.format(license);
+        const vehicleType = LicenseUtil.getVehicleType(license);
+
         const response = new EmbedBuilder()
             .setTitle(`${Str.toTitleCase(vehicleInfo.merk)} ${Str.toTitleCase(vehicleInfo.handelsbenaming)}`)
             .setDescription(description)
             .setThumbnail(
                 `https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicleInfo.merk)}.png`
             )
-            .setFooter({ text: LicenseUtil.format(license) });
+            .setFooter({ text: vehicleType ? `${formattedLicense} • ${vehicleType}` : formattedLicense });
 
         const comment = this.getComment();
         if (comment) {
