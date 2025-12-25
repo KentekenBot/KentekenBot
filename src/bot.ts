@@ -76,7 +76,7 @@ export class Bot {
 
         const customId = interaction.customId;
 
-        if (customId.startsWith('mijn-spots:') || customId.startsWith('server-spots:')) {
+        if (customId.startsWith('userspots:') || customId.startsWith('serverspots:')) {
             await this.handleSpotsPageChange(interaction, customId);
         }
     }
@@ -87,7 +87,7 @@ export class Bot {
         }
 
         const parts = customId.split(':');
-        const commandType = parts[0] as 'mijn-spots' | 'server-spots';
+        const commandType = parts[0] as 'userspots' | 'serverspots';
         const page = parseInt(parts[2], 10);
 
         if (isNaN(page)) {
@@ -96,8 +96,8 @@ export class Bot {
 
         await interaction.deferUpdate();
 
-        const guildId = commandType === 'server-spots' ? interaction.guildId : null;
-        const userId = commandType === 'mijn-spots' ? interaction.user.id : null;
+        const guildId = commandType === 'serverspots' ? interaction.guildId : null;
+        const userId = commandType === 'userspots' ? interaction.user.id : null;
 
         const result = await Sightings.getPaginated(page, guildId, userId);
         const components = SightingsView.build(result, commandType);

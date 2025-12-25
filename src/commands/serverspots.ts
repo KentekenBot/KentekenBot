@@ -7,7 +7,7 @@ import { SightingsView } from '../util/sightings-view';
 export class ServerSpots extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
         builder
-            .setName('server-spots')
+            .setName('serverspots')
             .setContexts(InteractionContextType.Guild)
             .setIntegrationTypes(ApplicationIntegrationType.GuildInstall)
             .setDescription('Bekijk alle spots van deze server');
@@ -26,7 +26,7 @@ export class ServerSpots extends BaseCommand implements ICommand {
 
         const result = await Sightings.getPaginated(1, guildId, null);
 
-        const components = SightingsView.build(result, 'server-spots');
+        const components = SightingsView.build(result, 'serverspots');
 
         await this.interaction.followUp({
             components,

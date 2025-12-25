@@ -5,8 +5,8 @@ import { AvailableSettings } from '../enums/available-settings';
 import { Settings } from './settings';
 import { Ping } from '../commands/ping';
 import { Status } from '../commands/status';
-import { MijnSpots } from '../commands/mijn-spots';
-import { ServerSpots } from '../commands/server-spots';
+import { UserSpots } from '../commands/userspots';
+import { ServerSpots } from '../commands/serverspots';
 
 export class CommandCollection {
     private static instance: CommandCollection;
@@ -17,7 +17,7 @@ export class CommandCollection {
     }
 
     private getCommandClasses(): CommandConstructor[] {
-        return [License, Ping, Status, MijnSpots, ServerSpots];
+        return [License, Ping, Status, UserSpots, ServerSpots];
     }
 
     private getCommands(): { builder: SlashCommandBuilder; command: CommandConstructor }[] {

@@ -4,10 +4,10 @@ import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType
 import { Sightings } from '../services/sightings';
 import { SightingsView } from '../util/sightings-view';
 
-export class MijnSpots extends BaseCommand implements ICommand {
+export class UserSpots extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
         builder
-            .setName('mijn-spots')
+            .setName('userspots')
             .setContexts(
                 InteractionContextType.Guild,
                 InteractionContextType.BotDM,
@@ -24,7 +24,7 @@ export class MijnSpots extends BaseCommand implements ICommand {
 
         const result = await Sightings.getPaginated(1, null, this.interaction.user.id);
 
-        const components = SightingsView.build(result, 'mijn-spots');
+        const components = SightingsView.build(result, 'userspots');
 
         await this.interaction.followUp({
             components,

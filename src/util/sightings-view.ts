@@ -14,7 +14,7 @@ import { Str } from './str';
 import { License } from './license';
 
 export class SightingsView {
-    public static build(result: PaginatedResult, commandType: 'mijn-spots' | 'server-spots'): ContainerBuilder[] {
+    public static build(result: PaginatedResult, commandType: 'userspots' | 'serverspots'): ContainerBuilder[] {
         const containers: ContainerBuilder[] = [];
 
         if (result.sightings.length === 0) {
@@ -30,7 +30,7 @@ export class SightingsView {
             .setAccentColor(0x5865f2)
             .addTextDisplayComponents(
                 new TextDisplayBuilder().setContent(
-                    commandType === 'mijn-spots'
+                    commandType === 'userspots'
                         ? `## 🚗 Jouw Spots\nJe hebt **${result.totalCount}** ${
                               result.totalCount === 1 ? 'voertuig' : 'voertuigen'
                           } gespot`
@@ -63,7 +63,7 @@ export class SightingsView {
 
     private static buildSightingContainer(
         sighting: PaginatedSighting,
-        commandType: 'mijn-spots' | 'server-spots'
+        commandType: 'userspots' | 'serverspots'
     ): ContainerBuilder {
         const vehicle = sighting.vehicle;
         const container = new ContainerBuilder().setAccentColor(this.getColorForFuel(vehicle?.primaryFuelType));
@@ -88,7 +88,7 @@ export class SightingsView {
             }
         }
 
-        if (commandType === 'server-spots') {
+        if (commandType === 'serverspots') {
             details.push(`👤 <@${sighting.discordUserId}>`);
         }
 
@@ -111,7 +111,7 @@ export class SightingsView {
 
     private static buildPaginationContainer(
         result: PaginatedResult,
-        commandType: 'mijn-spots' | 'server-spots'
+        commandType: 'userspots' | 'serverspots'
     ): ContainerBuilder {
         const container = new ContainerBuilder();
 
