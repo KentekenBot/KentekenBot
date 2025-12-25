@@ -20,7 +20,7 @@ export class UserSpots extends BaseCommand implements ICommand {
     }
 
     public async handle(): Promise<void> {
-        await this.interaction.deferReply({ ephemeral: true });
+        await this.interaction.deferReply();
 
         const result = await Sightings.getPaginated(1, null, this.interaction.user.id);
 
