@@ -27,6 +27,7 @@ export class Sighting extends Model<SightingAttributes, UserInput> implements Si
     declare vehicleId: number;
     declare updatedAt: Date;
     declare comment: string | null;
+    declare vehicle?: Vehicle;
 
     static associate() {
         Sighting.belongsTo(Vehicle, {
