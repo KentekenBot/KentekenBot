@@ -22,9 +22,10 @@ export class UserSpots extends BaseCommand implements ICommand {
     public async handle(): Promise<void> {
         await this.interaction.deferReply();
 
-        const result = await Sightings.getPaginated(1, null, this.interaction.user.id);
+        const user = this.interaction.user;
+        const result = await Sightings.getPaginated(1, null, user.id);
 
-        const components = SightingsView.build(result, 'userspots');
+        const components = SightingsView.build(result, 'userspots', user.id, user.displayName);
 
         await this.interaction.followUp({
             components,

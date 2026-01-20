@@ -89,6 +89,7 @@ export class Bot {
         const parts = customId.split(':');
         const commandType = parts[0] as 'userspots' | 'serverspots';
         const page = parseInt(parts[2], 10);
+        const contextUserId = parts[3];
 
         if (isNaN(page)) {
             return;
@@ -97,14 +98,22 @@ export class Bot {
         await interaction.deferUpdate();
 
         const guildId = commandType === 'serverspots' ? interaction.guildId : null;
-        const userId = commandType === 'userspots' ? interaction.user.id : null;
+        const userId = commandType === 'userspots' ? contextUserId : null;
 
         const result = await Sightings.getPaginated(page, guildId, userId);
-        const components = SightingsView.build(result, commandType);
+
+        let displayName: string | undefined;
+        if (commandType === 'userspots' && contextUserId) {
+            const user = await this.client.users.fetch(contextUserId);
+            displayName = user.displayName;
+        }
+
+        const components = SightingsView.build(result, commandType, contextUserId, displayName);
 
         await interaction.editReply({
             components,
             flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
         });
     }
 }

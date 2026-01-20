@@ -34,7 +34,7 @@ export interface PaginatedResult {
 }
 
 export class Sightings {
-    private static readonly ITEMS_PER_PAGE = 5;
+    private static readonly ITEMS_PER_PAGE = 6;
 
     public static async getPaginated(
         page: number,
@@ -70,7 +70,7 @@ export class Sightings {
         const totalPages = Math.ceil(count / this.ITEMS_PER_PAGE);
 
         const sightings: PaginatedSighting[] = rows.map((row) => {
-            const vehicle = (row as unknown as { vehicle?: Vehicle }).vehicle;
+            const vehicle = row.vehicle;
             return {
                 id: row.id,
                 license: row.license,
@@ -102,6 +102,7 @@ export class Sightings {
             hasPreviousPage: page > 1,
         };
     }
+
     public static async list(
         license: string,
         discordGuildId: string | null,

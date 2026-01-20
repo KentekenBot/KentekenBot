@@ -14,146 +14,132 @@ import { Str } from './str';
 import { License } from './license';
 
 export class SightingsView {
-    public static build(result: PaginatedResult, commandType: 'userspots' | 'serverspots'): ContainerBuilder[] {
-        const containers: ContainerBuilder[] = [];
+    public static build(
+        result: PaginatedResult,
+        commandType: 'userspots' | 'serverspots',
+        contextUserId?: string,
+        displayName?: string
+    ): ContainerBuilder[] {
+        const container = new ContainerBuilder().setAccentColor(0x5865f2);
 
         if (result.sightings.length === 0) {
-            const emptyContainer = new ContainerBuilder()
-                .setAccentColor(0x5865f2)
-                .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent('## Geen spots gevonden\nEr zijn nog geen spots geregistreerd.')
-                );
-            return [emptyContainer];
-        }
-
-        const headerContainer = new ContainerBuilder()
-            .setAccentColor(0x5865f2)
-            .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(
-                    commandType === 'userspots'
-                        ? `## 🚗 Jouw Spots\nJe hebt **${result.totalCount}** ${
-                              result.totalCount === 1 ? 'voertuig' : 'voertuigen'
-                          } gespot`
-                        : `## 🚗 Server Spots\nDeze server heeft **${result.totalCount}** ${
-                              result.totalCount === 1 ? 'spot' : 'spots'
-                          }`
-                )
+            container.addTextDisplayComponents(
+                new TextDisplayBuilder().setContent('## Geen spots gevonden\nEr zijn nog geen spots geregistreerd.')
             );
-
-        if (result.totalPages > 1) {
-            headerContainer.addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(`Pagina ${result.currentPage} van ${result.totalPages}`)
-            );
+            return [container];
         }
-
-        containers.push(headerContainer);
-
-        for (const sighting of result.sightings) {
-            const sightingContainer = this.buildSightingContainer(sighting, commandType);
-            containers.push(sightingContainer);
-        }
-
-        if (result.totalPages > 1) {
-            const paginationContainer = this.buildPaginationContainer(result, commandType);
-            containers.push(paginationContainer);
-        }
-
-        return containers;
-    }
-
-    private static buildSightingContainer(
-        sighting: PaginatedSighting,
-        commandType: 'userspots' | 'serverspots'
-    ): ContainerBuilder {
-        const vehicle = sighting.vehicle;
-        const container = new ContainerBuilder().setAccentColor(this.getColorForFuel(vehicle?.primaryFuelType));
 
         const title =
-            vehicle?.brand && vehicle?.tradeName
-                ? `### ${Str.toTitleCase(vehicle.brand)} ${Str.toTitleCase(vehicle.tradeName)}`
-                : `### ${License.format(sighting.license)}`;
+            commandType === 'userspots'
+                ? `## 🚗 ${displayName ? `${displayName}'s` : 'Jouw'} Spots`
+                : '## 🚗 Server Spots';
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(title));
 
-        const licensePlate = `**Kenteken:** ${License.format(sighting.license)}`;
+        for (let i = 0; i < result.sightings.length; i++) {
+            container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+            this.addSightingToContainer(container, result.sightings[i], commandType);
+        }
+
+        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+        this.addPaginationToContainer(container, result, commandType, contextUserId);
+
+        return [container];
+    }
+
+    private static addSightingToContainer(
+        container: ContainerBuilder,
+        sighting: PaginatedSighting,
+        commandType: 'userspots' | 'serverspots'
+    ): void {
+        const vehicle = sighting.vehicle;
+        const formattedLicense = sighting.license ? License.format(sighting.license) : null;
+        const brand = vehicle?.brand;
+        const tradeName = vehicle?.tradeName;
+
+        let title: string;
+        if (formattedLicense && brand && tradeName) {
+            title = `\`${formattedLicense}\` - **${Str.toTitleCase(brand)} ${Str.toTitleCase(tradeName)}**`;
+        } else if (formattedLicense) {
+            title = `\`${formattedLicense}\``;
+        } else {
+            title = '**Onbekend voertuig**';
+        }
+
         const timestamp = DateTime.getDiscordTimestamp(sighting.createdAt.getTime(), DiscordTimestamps.RELATIVE);
 
-        const details: string[] = [title, licensePlate];
+        const meta: string[] = [];
 
-        if (vehicle) {
-            if (vehicle.color) {
-                details.push(`🎨 ${Str.toTitleCase(vehicle.color)}`);
-            }
-            if (vehicle.totalHorsepower) {
-                const emoji = vehicle.primaryFuelType?.toLowerCase() === 'elektriciteit' ? '⚡' : '⛽';
-                details.push(`${emoji} ${vehicle.totalHorsepower} PK`);
-            }
+        if (vehicle?.color) {
+            meta.push(`🎨 ${Str.toTitleCase(vehicle.color)}`);
         }
-
+        if (vehicle?.totalHorsepower && vehicle.totalHorsepower !== '0') {
+            const emoji = vehicle.primaryFuelType?.toLowerCase() === 'elektriciteit' ? '⚡' : '⛽';
+            meta.push(`${emoji} ${vehicle.totalHorsepower}PK`);
+        }
         if (commandType === 'serverspots') {
-            details.push(`👤 <@${sighting.discordUserId}>`);
-        }
-
-        details.push(`🕐 ${timestamp}`);
-
-        if (sighting.comment) {
-            details.push(`💬 _${Str.limitCharacters(sighting.comment, 100)}_`);
+            meta.push(`<@${sighting.discordUserId}>`);
         }
 
         if (sighting.discordChannelId && sighting.discordInteractionId) {
-            details.push(
-                `[Bekijk spot](https://discordapp.com/channels/${sighting.discordGuildId}/${sighting.discordChannelId}/${sighting.discordInteractionId})`
+            meta.push(
+                `[${timestamp}](https://discord.com/channels/${sighting.discordGuildId}/${sighting.discordChannelId}/${sighting.discordInteractionId})`
             );
+        } else {
+            meta.push(`${timestamp}`);
         }
 
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(details.join('\n')));
+        let content = `${title}\n${meta.join(' - ')}`;
 
-        return container;
+        if (sighting.comment) {
+            content += `\n💬 _${Str.limitCharacters(sighting.comment, 80)}_`;
+        }
+
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(content));
     }
 
-    private static buildPaginationContainer(
+    private static addPaginationToContainer(
+        container: ContainerBuilder,
         result: PaginatedResult,
-        commandType: 'userspots' | 'serverspots'
-    ): ContainerBuilder {
-        const container = new ContainerBuilder();
+        commandType: 'userspots' | 'serverspots',
+        contextUserId?: string
+    ): void {
+        const footerText =
+            commandType === 'userspots'
+                ? `${result.totalCount} ${result.totalCount === 1 ? 'voertuig gespot' : 'voertuigen gespot'}`
+                : `${result.totalCount} ${
+                      result.totalCount === 1 ? 'voertuig gespot' : 'voertuigen gespot'
+                  } in deze server`;
 
-        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+        const pageInfo = result.totalPages > 1 ? ` · Pagina ${result.currentPage}/${result.totalPages}` : '';
 
-        const buttons: ButtonBuilder[] = [];
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# ${footerText}${pageInfo}`));
 
-        if (result.hasPreviousPage) {
-            buttons.push(
+        if (result.totalPages > 1) {
+            const suffix = contextUserId ? `:${contextUserId}` : '';
+            const buttons = [
                 new ButtonBuilder()
-                    .setCustomId(`${commandType}:prev:${result.currentPage - 1}`)
-                    .setLabel('◀ Vorige')
+                    .setCustomId(`${commandType}:first:1${suffix}`)
+                    .setEmoji('⏮')
                     .setStyle(ButtonStyle.Secondary)
-            );
-        }
-
-        if (result.hasNextPage) {
-            buttons.push(
+                    .setDisabled(result.currentPage === 1),
                 new ButtonBuilder()
-                    .setCustomId(`${commandType}:next:${result.currentPage + 1}`)
-                    .setLabel('Volgende ▶')
+                    .setCustomId(`${commandType}:prev:${result.currentPage - 1}${suffix}`)
+                    .setEmoji('◀')
                     .setStyle(ButtonStyle.Secondary)
-            );
-        }
+                    .setDisabled(!result.hasPreviousPage),
+                new ButtonBuilder()
+                    .setCustomId(`${commandType}:next:${result.currentPage + 1}${suffix}`)
+                    .setEmoji('▶')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(!result.hasNextPage),
+                new ButtonBuilder()
+                    .setCustomId(`${commandType}:last:${result.totalPages}${suffix}`)
+                    .setEmoji('⏭')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(result.currentPage === result.totalPages),
+            ];
 
-        if (buttons.length > 0) {
             container.addActionRowComponents(new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons));
         }
-
-        return container;
-    }
-
-    private static getColorForFuel(fuelType: string | null | undefined): number {
-        if (!fuelType) return 0x808080;
-
-        const fuel = fuelType.toLowerCase();
-        if (fuel.includes('elektr')) return 0x00ff00;
-        if (fuel.includes('diesel')) return 0x000000;
-        if (fuel.includes('benzine')) return 0xff6600;
-        if (fuel.includes('lpg')) return 0x0066ff;
-        if (fuel.includes('waterstof')) return 0x00ccff;
-
-        return 0x808080;
     }
 }

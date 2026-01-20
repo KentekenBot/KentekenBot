@@ -31,6 +31,7 @@ export class ServerSpots extends BaseCommand implements ICommand {
         await this.interaction.followUp({
             components,
             flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
         });
     }
 }
