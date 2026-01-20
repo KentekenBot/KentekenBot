@@ -1,9 +1,11 @@
-import { Client, Interaction } from 'discord.js';
+import { Client, Interaction, MessageFlags } from 'discord.js';
 import { Settings } from './services/settings';
 import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
 import { Heartbeat } from './services/heartbeat';
 import { CommandCollection } from './services/command-collection';
+import { Sightings } from './services/sightings';
+import { SightingsView } from './util/sightings-view';
 
 export class Bot {
     private client = new Client({
@@ -40,6 +42,18 @@ export class Bot {
     }
 
     private handleInteraction(interaction: Interaction): void {
+        if (interaction.isChatInputCommand()) {
+            this.handleCommand(interaction);
+            return;
+        }
+
+        if (interaction.isButton()) {
+            this.handleButton(interaction);
+            return;
+        }
+    }
+
+    private handleCommand(interaction: Interaction): void {
         if (!interaction.isChatInputCommand()) {
             return;
         }
@@ -53,5 +67,53 @@ export class Bot {
         }
 
         new handlerClass().init(interaction, this.client).handle();
+    }
+
+    private async handleButton(interaction: Interaction): Promise<void> {
+        if (!interaction.isButton()) {
+            return;
+        }
+
+        const customId = interaction.customId;
+
+        if (customId.startsWith('userspots:') || customId.startsWith('serverspots:')) {
+            await this.handleSpotsPageChange(interaction, customId);
+        }
+    }
+
+    private async handleSpotsPageChange(interaction: Interaction, customId: string): Promise<void> {
+        if (!interaction.isButton()) {
+            return;
+        }
+
+        const parts = customId.split(':');
+        const commandType = parts[0] as 'userspots' | 'serverspots';
+        const page = parseInt(parts[2], 10);
+        const contextUserId = parts[3];
+
+        if (isNaN(page)) {
+            return;
+        }
+
+        await interaction.deferUpdate();
+
+        const guildId = commandType === 'serverspots' ? interaction.guildId : null;
+        const userId = commandType === 'userspots' ? contextUserId : null;
+
+        const result = await Sightings.getPaginated(page, guildId, userId);
+
+        let displayName: string | undefined;
+        if (commandType === 'userspots' && contextUserId) {
+            const user = await this.client.users.fetch(contextUserId);
+            displayName = user.displayName;
+        }
+
+        const components = SightingsView.build(result, commandType, contextUserId, displayName);
+
+        await interaction.editReply({
+            components,
+            flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
+        });
     }
 }

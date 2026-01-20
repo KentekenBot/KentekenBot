@@ -1,10 +1,108 @@
 import { Sighting } from '../models/sighting';
+import { Vehicle } from '../models/vehicle';
 import { escapeMarkdown, Guild, User } from 'discord.js';
 import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { Str } from '../util/str';
 
+export interface PaginatedSighting {
+    id: number;
+    license: string;
+    comment: string | null;
+    createdAt: Date;
+    discordUserId: string;
+    discordGuildId: string;
+    discordChannelId: string;
+    discordInteractionId: string;
+    vehicle: {
+        brand: string | null;
+        tradeName: string | null;
+        color: string | null;
+        totalHorsepower: string | null;
+        primaryFuelType: string | null;
+        country: string;
+    } | null;
+}
+
+export interface PaginatedResult {
+    sightings: PaginatedSighting[];
+    totalCount: number;
+    currentPage: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+}
+
 export class Sightings {
+    private static readonly ITEMS_PER_PAGE = 6;
+
+    public static async getPaginated(
+        page: number,
+        discordGuildId: string | null,
+        discordUserId: string | null
+    ): Promise<PaginatedResult> {
+        const where: Record<string, string> = {};
+
+        if (discordGuildId) {
+            where.discordGuildId = discordGuildId;
+        }
+
+        if (discordUserId) {
+            where.discordUserId = discordUserId;
+        }
+
+        const offset = (page - 1) * this.ITEMS_PER_PAGE;
+
+        const { count, rows } = await Sighting.findAndCountAll({
+            where,
+            limit: this.ITEMS_PER_PAGE,
+            offset,
+            order: [['createdAt', 'DESC']],
+            include: [
+                {
+                    model: Vehicle,
+                    as: 'vehicle',
+                    required: false,
+                },
+            ],
+        });
+
+        const totalPages = Math.ceil(count / this.ITEMS_PER_PAGE);
+
+        const sightings: PaginatedSighting[] = rows.map((row) => {
+            const vehicle = row.vehicle;
+            return {
+                id: row.id,
+                license: row.license,
+                comment: row.comment,
+                createdAt: row.createdAt,
+                discordUserId: row.discordUserId,
+                discordGuildId: row.discordGuildId,
+                discordChannelId: row.discordChannelId,
+                discordInteractionId: row.discordInteractionId,
+                vehicle: vehicle
+                    ? {
+                          brand: vehicle.brand,
+                          tradeName: vehicle.tradeName,
+                          color: vehicle.color,
+                          totalHorsepower: vehicle.totalHorsepower,
+                          primaryFuelType: vehicle.primaryFuelType,
+                          country: vehicle.country,
+                      }
+                    : null,
+            };
+        });
+
+        return {
+            sightings,
+            totalCount: count,
+            currentPage: page,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1,
+        };
+    }
+
     public static async list(
         license: string,
         discordGuildId: string | null,
