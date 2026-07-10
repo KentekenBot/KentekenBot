@@ -7,6 +7,8 @@ import { Ping } from '../commands/ping';
 import { Status } from '../commands/status';
 import { UserSpots } from '../commands/userspots';
 import { ServerSpots } from '../commands/serverspots';
+import { Expensive } from '../commands/expensive';
+import { Oldest } from '../commands/oldest';
 
 export class CommandCollection {
     private static instance: CommandCollection;
@@ -17,7 +19,7 @@ export class CommandCollection {
     }
 
     private getCommandClasses(): CommandConstructor[] {
-        return [License, Ping, Status, UserSpots, ServerSpots];
+        return [License, Ping, Status, UserSpots, ServerSpots, Expensive, Oldest];
     }
 
     private getCommands(): { builder: SlashCommandBuilder; command: CommandConstructor }[] {
