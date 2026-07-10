@@ -11,6 +11,7 @@ import {
 } from 'discord.js';
 import { LicenseViewData, NorwegianViewData } from '../types/license-view';
 import { VehicleInfo } from '../models/vehicle-info';
+import { DutchPlate } from './dutch-plate';
 import { Str } from './str';
 import { DateTime } from './date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
@@ -25,16 +26,10 @@ export class LicenseView {
     public static build(data: LicenseViewData, now = Date.now()): ContainerBuilder[] {
         const container = new ContainerBuilder().setAccentColor(this.accentColor(data));
 
-        this.addHeader(container, data);
-
         const specs = this.buildSpecs(data, now);
+        this.addHeader(container, data, specs);
+
         const flags = this.buildFlags(data.vehicleInfo);
-        if (specs || flags.length > 0) {
-            container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
-        }
-        if (specs) {
-            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(specs));
-        }
         if (flags.length > 0) {
             container.addTextDisplayComponents(new TextDisplayBuilder().setContent(flags.join('\n')));
         }
@@ -124,7 +119,7 @@ export class LicenseView {
         return [container];
     }
 
-    private static addHeader(container: ContainerBuilder, data: LicenseViewData): void {
+    private static addHeader(container: ContainerBuilder, data: LicenseViewData, specs: string | null): void {
         const vehicleInfo = data.vehicleInfo;
 
         const nameParts: string[] = [];
@@ -136,20 +131,31 @@ export class LicenseView {
         }
 
         const title = `## ${nameParts.length > 0 ? nameParts.join(' ') : data.formattedLicense}`;
-        const subtitle = data.vehicleType
-            ? `\`${data.formattedLicense}\` · ${data.vehicleType}`
-            : `\`${data.formattedLicense}\``;
+
+        const headerParts = [title, DutchPlate.render(data.formattedLicense)];
+        if (data.vehicleType) {
+            headerParts.push(`-# ${data.vehicleType}`);
+        }
+        const header = headerParts.join('\n');
 
         if (vehicleInfo.merk) {
-            container.addSectionComponents(
-                new SectionBuilder()
-                    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${title}\n${subtitle}`))
-                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(this.logoUrl(vehicleInfo.merk)))
-            );
+            const section = new SectionBuilder()
+                .addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
+                .setThumbnailAccessory(new ThumbnailBuilder().setURL(this.logoUrl(vehicleInfo.merk)));
+
+            if (specs) {
+                section.addTextDisplayComponents(new TextDisplayBuilder().setContent(specs));
+            }
+
+            container.addSectionComponents(section);
             return;
         }
 
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`${title}\n${subtitle}`));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(header));
+
+        if (specs) {
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(specs));
+        }
     }
 
     private static buildSpecs(data: LicenseViewData, now: number): string | null {
