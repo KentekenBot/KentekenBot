@@ -51,6 +51,27 @@ export class Bot {
             this.handleButton(interaction);
             return;
         }
+
+        if (interaction.isAutocomplete()) {
+            this.handleAutocomplete(interaction);
+            return;
+        }
+    }
+
+    private handleAutocomplete(interaction: Interaction): void {
+        if (!interaction.isAutocomplete()) {
+            return;
+        }
+
+        const handlerClass = CommandCollection.getInstance().getCommandHandler(interaction.commandName);
+        if (!handlerClass) {
+            return;
+        }
+
+        const handler = new handlerClass();
+        if (handler.autocomplete) {
+            handler.autocomplete(interaction);
+        }
     }
 
     private handleCommand(interaction: Interaction): void {
