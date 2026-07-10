@@ -6,6 +6,9 @@ import { Heartbeat } from './services/heartbeat';
 import { CommandCollection } from './services/command-collection';
 import { Sightings } from './services/sightings';
 import { SightingsView } from './util/sightings-view';
+import { Boards } from './services/boards';
+import { BoardsView } from './util/boards-view';
+import { isBoardView } from './types/boards';
 
 export class Bot {
     private client = new Client({
@@ -78,7 +81,32 @@ export class Bot {
 
         if (customId.startsWith('userspots:') || customId.startsWith('serverspots:')) {
             await this.handleSpotsPageChange(interaction, customId);
+            return;
         }
+
+        if (customId.startsWith(`${BoardsView.BUTTON_PREFIX}:`)) {
+            await this.handleBoardChange(interaction, customId);
+        }
+    }
+
+    private async handleBoardChange(interaction: Interaction, customId: string): Promise<void> {
+        if (!interaction.isButton() || !interaction.guildId) {
+            return;
+        }
+
+        const view = customId.split(':')[1];
+        if (!isBoardView(view)) {
+            return;
+        }
+
+        await interaction.deferUpdate();
+
+        const payload = await Boards.render(view, interaction.guildId, interaction.user);
+
+        await interaction.editReply({
+            ...payload,
+            allowedMentions: { users: [] },
+        });
     }
 
     private async handleSpotsPageChange(interaction: Interaction, customId: string): Promise<void> {
