@@ -1,4 +1,4 @@
-import { EmbedBuilder } from 'discord.js';
+import { ContainerBuilder, SeparatorBuilder, SeparatorSpacingSize, TextDisplayBuilder } from 'discord.js';
 import { NamedVehicle, StatsProfile } from '../types/stats';
 import { Str } from './str';
 import { formatCurrency } from './format-currency';
@@ -6,52 +6,61 @@ import { DateTime } from './date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 
 export class StatsView {
-    public static build(profile: StatsProfile, displayName: string): EmbedBuilder {
-        const embed = new EmbedBuilder().setColor(0x5865f2).setTitle(`📊 ${displayName}'s stats`);
+    public static build(profile: StatsProfile, displayName: string): ContainerBuilder[] {
+        const container = new ContainerBuilder().setAccentColor(0x5865f2);
+
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`## 📊 ${displayName}'s stats`));
 
         if (profile.totalSpots === 0) {
-            embed.setDescription('Nog geen spots. Gebruik `/k <kenteken>` om te beginnen!');
-            return embed;
+            container.addTextDisplayComponents(
+                new TextDisplayBuilder().setContent('Nog geen spots. Gebruik `/k <kenteken>` om te beginnen!')
+            );
+            return [container];
         }
 
-        embed.addFields(
-            { name: 'Spots', value: profile.totalSpots.toString(), inline: true },
-            { name: 'Unieke kentekens', value: profile.uniquePlates.toString(), inline: true },
-            { name: 'Brandstof', value: `⚡ ${profile.electricCount}  ·  ⛽ ${profile.fuelCount}`, inline: true }
-        );
+        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
 
-        if (profile.favoriteBrand) {
-            const brand = Str.toTitleCase(profile.favoriteBrand.name);
-            embed.addFields({
-                name: 'Favoriet merk',
-                value: `${brand} (${profile.favoriteBrand.count}x)`,
-                inline: true,
-            });
-        }
+        const counts = [
+            `**Spots:** ${profile.totalSpots}`,
+            `**Unieke kentekens:** ${profile.uniquePlates}`,
+            `**Brandstof:** ⚡ ${profile.electricCount} · ⛽ ${profile.fuelCount}`,
+        ];
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(counts.join('\n')));
 
-        if (profile.mostExpensive) {
-            embed.addFields({
-                name: 'Duurste',
-                value: `${this.vehicleName(profile.mostExpensive)} — ${formatCurrency(profile.mostExpensive.price)}`,
-                inline: true,
-            });
-        }
-
-        if (profile.oldest) {
-            const year = profile.oldest.date.getFullYear();
-            embed.addFields({
-                name: 'Oudste',
-                value: `${year} ${this.vehicleName(profile.oldest)}`,
-                inline: true,
-            });
+        const highlights = this.buildHighlights(profile);
+        if (highlights.length > 0) {
+            container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(highlights.join('\n')));
         }
 
         if (profile.firstSpotAt) {
             const timestamp = DateTime.getDiscordTimestamp(profile.firstSpotAt.getTime(), DiscordTimestamps.RELATIVE);
-            embed.addFields({ name: 'Eerste spot', value: timestamp });
+            container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# Eerste spot ${timestamp}`));
         }
 
-        return embed;
+        return [container];
+    }
+
+    private static buildHighlights(profile: StatsProfile): string[] {
+        const highlights: string[] = [];
+
+        if (profile.favoriteBrand) {
+            const brand = Str.toTitleCase(profile.favoriteBrand.name);
+            highlights.push(`**Favoriet merk:** ${brand} (${profile.favoriteBrand.count}x)`);
+        }
+
+        if (profile.mostExpensive) {
+            const price = formatCurrency(profile.mostExpensive.price);
+            highlights.push(`**Duurste:** ${this.vehicleName(profile.mostExpensive)} — ${price}`);
+        }
+
+        if (profile.oldest) {
+            const year = profile.oldest.date.getFullYear();
+            highlights.push(`**Oudste:** ${year} ${this.vehicleName(profile.oldest)}`);
+        }
+
+        return highlights;
     }
 
     private static vehicleName(vehicle: NamedVehicle): string {

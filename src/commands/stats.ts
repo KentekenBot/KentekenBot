@@ -1,6 +1,12 @@
 import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
-import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, User } from 'discord.js';
+import {
+    SlashCommandBuilder,
+    InteractionContextType,
+    ApplicationIntegrationType,
+    User,
+    MessageFlags,
+} from 'discord.js';
 import { VehicleStats } from '../queries/vehicle-stats';
 import { StatsView } from '../util/stats-view';
 
@@ -27,9 +33,12 @@ export class Stats extends BaseCommand implements ICommand {
 
         const target = this.getTargetUser();
         const profile = await VehicleStats.forUser(target.id);
-        const embed = StatsView.build(profile, target.displayName);
+        const components = StatsView.build(profile, target.displayName);
 
-        await this.interaction.followUp({ embeds: [embed] });
+        await this.interaction.followUp({
+            components,
+            flags: MessageFlags.IsComponentsV2,
+        });
     }
 
     private getTargetUser(): User {
