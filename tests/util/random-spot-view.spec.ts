@@ -1,6 +1,20 @@
 import { RandomSpotView } from '../../src/util/random-spot-view';
 import { RandomSpot } from '../../src/types/random-spot';
 
+function textContents(containers: ReturnType<typeof RandomSpotView.build>): string {
+    const contents: string[] = [];
+
+    for (const container of containers) {
+        for (const component of container.toJSON().components) {
+            if ('content' in component && typeof component.content === 'string') {
+                contents.push(component.content);
+            }
+        }
+    }
+
+    return contents.join('\n');
+}
+
 const baseSpot: RandomSpot = {
     license: 'AB123C',
     comment: null,
@@ -19,13 +33,13 @@ const baseSpot: RandomSpot = {
 };
 
 describe('RandomSpotView', () => {
-    it('renders the vehicle name, plate and metadata', () => {
-        const embed = RandomSpotView.build(baseSpot).toJSON();
+    it('renders the vehicle name, plate and metadata in a components v2 container', () => {
+        const contents = textContents(RandomSpotView.build(baseSpot));
 
-        expect(embed.description).toBe('`AB-123-C` — **Volkswagen Golf**');
-        const vehicleField = (embed.fields ?? []).find((field) => field.name === 'Voertuig');
-        expect(vehicleField?.value).toContain('🎨 Zwart');
-        expect(vehicleField?.value).toContain('⛽ 110PK');
+        expect(contents).toContain('## 🎲 Random spot');
+        expect(contents).toContain('`AB-123-C` — **Volkswagen Golf**');
+        expect(contents).toContain('🎨 Zwart');
+        expect(contents).toContain('⛽ 110PK');
     });
 
     it('uses a lightning emoji for electric vehicles', () => {
@@ -34,26 +48,28 @@ describe('RandomSpotView', () => {
             vehicle: { ...baseSpot.vehicle!, primaryFuelType: 'Elektriciteit' },
         };
 
-        const embed = RandomSpotView.build(electric).toJSON();
-        const vehicleField = (embed.fields ?? []).find((field) => field.name === 'Voertuig');
-
-        expect(vehicleField?.value).toContain('⚡ 110PK');
+        expect(textContents(RandomSpotView.build(electric))).toContain('⚡ 110PK');
     });
 
     it('links to the original spot message', () => {
-        const embed = RandomSpotView.build(baseSpot).toJSON();
-        const spotterField = (embed.fields ?? []).find((field) => field.value.includes('Gespot door'));
+        const contents = textContents(RandomSpotView.build(baseSpot));
 
-        expect(spotterField?.value).toContain('<@user-1>');
-        expect(spotterField?.value).toContain('https://discord.com/channels/guild-1/chan-1/int-1');
+        expect(contents).toContain('Gespot door <@user-1>');
+        expect(contents).toContain('https://discord.com/channels/guild-1/chan-1/int-1');
+    });
+
+    it('shows the comment when present', () => {
+        const withComment: RandomSpot = { ...baseSpot, comment: 'mooie wagen' };
+
+        expect(textContents(RandomSpotView.build(withComment))).toContain('💬 _mooie wagen_');
     });
 
     it('falls back to just the plate when the vehicle is unknown', () => {
         const unknown: RandomSpot = { ...baseSpot, vehicle: null };
 
-        const embed = RandomSpotView.build(unknown).toJSON();
+        const contents = textContents(RandomSpotView.build(unknown));
 
-        expect(embed.description).toBe('`AB-123-C`');
-        expect((embed.fields ?? []).some((field) => field.name === 'Voertuig')).toBe(false);
+        expect(contents).toContain('`AB-123-C`');
+        expect(contents).not.toContain('🎨');
     });
 });

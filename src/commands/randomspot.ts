@@ -1,6 +1,6 @@
 import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
-import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType } from 'discord.js';
+import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, MessageFlags } from 'discord.js';
 import { RandomSpots } from '../queries/random-spot';
 import { RandomSpotView } from '../util/random-spot-view';
 
@@ -30,10 +30,11 @@ export class RandomSpot extends BaseCommand implements ICommand {
             return;
         }
 
-        const embed = RandomSpotView.build(spot);
+        const components = RandomSpotView.build(spot);
 
         await this.interaction.followUp({
-            embeds: [embed],
+            components,
+            flags: MessageFlags.IsComponentsV2,
             allowedMentions: { users: [] },
         });
     }
