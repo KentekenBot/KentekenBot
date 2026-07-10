@@ -12,13 +12,13 @@ import {
     InteractionContextType,
     ApplicationIntegrationType,
 } from 'discord.js';
-import { Sightings } from '../services/sightings';
+import { Sightings } from '../queries/sightings';
 import { FuelInfo } from '../models/fuel-info';
 import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { calculateHorsePower } from '../util/calulate-horse-power';
 import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen';
-import { Vehicles } from '../services/vehicles';
+import { Vehicles } from '../queries/vehicles';
 import { Vehicle } from '../models';
 
 export class License extends BaseCommand implements ICommand {
