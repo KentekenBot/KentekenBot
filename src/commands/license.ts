@@ -1,27 +1,17 @@
 import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
 import { VehicleInfo } from '../models/vehicle-info';
-import { Str } from '../util/str';
 import { License as LicenseUtil } from '../util/license';
-import {
-    ActionRowBuilder,
-    ButtonBuilder,
-    EmbedBuilder,
-    ButtonStyle,
-    SlashCommandBuilder,
-    InteractionContextType,
-    ApplicationIntegrationType,
-} from 'discord.js';
+import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, MessageFlags } from 'discord.js';
 import { Sightings } from '../services/sightings';
 import { FuelInfo } from '../models/fuel-info';
-import { DateTime } from '../util/date-time';
-import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { calculateHorsePower } from '../util/calulate-horse-power';
 import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen';
 import { Vehicles } from '../services/vehicles';
 import { Vehicle } from '../models';
 import { FirstSpotter } from '../queries/first-spotter';
 import { FirstSpotBadge } from '../util/first-spot-badge';
+import { LicenseView } from '../util/license-view';
 
 export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -62,19 +52,20 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
-        const [vehicleInfo, fuelInfo, sightings] = await Promise.all([
+        const [vehicleInfo, fuelInfo, sightings, previousSpotCount] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
             Sightings.list(license, this.interaction.guildId, this.interaction.user.id),
+            Sightings.countForLicense(license, this.interaction.guildId),
         ]);
 
         if (!vehicleInfo) {
             if (sightings) {
-                const response = new EmbedBuilder()
-                    .setTitle(`Kenteken ${license} niet gevonden, rdw heeft m niet meer (rip)`)
-                    .addFields([{ name: 'Eerder gespot door:', value: sightings.list }])
-                    .setFooter({ text: LicenseUtil.format(license) });
-                await this.interaction.followUp({ embeds: [response] });
+                await this.interaction.followUp({
+                    components: LicenseView.buildNotFound(license, LicenseUtil.format(license), sightings.list),
+                    flags: MessageFlags.IsComponentsV2,
+                    allowedMentions: { users: [] },
+                });
             } else {
                 this.interaction.followUp('Ik kon dat kenteken niet vindn kerol');
             }
@@ -87,60 +78,22 @@ export class License extends BaseCommand implements ICommand {
             vehicleInfo.handelsbenaming
         );
 
-        const fuelDescription: string[] = [];
-        fuelInfo.engines.forEach((engine) => {
-            fuelDescription.push(engine.getHorsePowerDescription());
+        const components = LicenseView.build({
+            vehicleInfo,
+            fuelInfo,
+            formattedLicense: LicenseUtil.format(license),
+            vehicleType: LicenseUtil.getVehicleType(license),
+            badge: isFirstModel ? FirstSpotBadge.message(vehicleInfo.merk, vehicleInfo.handelsbenaming) : null,
+            comment: this.getComment(),
+            sightingsList: sightings ? sightings.list : null,
+            spotCount: previousSpotCount !== null ? previousSpotCount + 1 : null,
         });
 
-        const meta = [
-            `🎨 ${Str.toTitleCase(vehicleInfo.eerste_kleur)}`,
-            vehicleInfo.getPriceDescription(),
-            `🗓️ ${DateTime.getDiscordTimestamp(
-                vehicleInfo.getConstructionDateTimestamp(),
-                DiscordTimestamps.SHORT_DATE
-            )}`,
-        ];
-
-        const description = fuelDescription.join('  -  ') + '\n' + meta.join('  -  ');
-
-        const formattedLicense = LicenseUtil.format(license);
-        const vehicleType = LicenseUtil.getVehicleType(license);
-
-        const response = new EmbedBuilder()
-            .setTitle(`${Str.toTitleCase(vehicleInfo.merk)} ${Str.toTitleCase(vehicleInfo.handelsbenaming)}`)
-            .setDescription(description)
-            .setThumbnail(
-                `https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicleInfo.merk)}.png`
-            )
-            .setFooter({ text: vehicleType ? `${formattedLicense} • ${vehicleType}` : formattedLicense });
-
-        if (isFirstModel) {
-            response.addFields([
-                { name: '🥇 Primeur', value: FirstSpotBadge.message(vehicleInfo.merk, vehicleInfo.handelsbenaming) },
-            ]);
-        }
-
-        const comment = this.getComment();
-        if (comment) {
-            response.addFields([{ name: 'Commentaar:', value: comment }]);
-        }
-
-        if (sightings) {
-            response.addFields([{ name: 'Eerder gespot door:', value: sightings.list }]);
-        }
-
-        const links = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-                .setLabel('Kentekencheck')
-                .setStyle(ButtonStyle.Link)
-                .setURL(`https://kentekencheck.nl/kenteken?i=${license}`),
-            new ButtonBuilder()
-                .setLabel('Finnik')
-                .setStyle(ButtonStyle.Link)
-                .setURL(`https://finnik.nl/kenteken/${license}/gratis`)
-        );
-
-        await this.interaction.followUp({ embeds: [response], components: [links] });
+        await this.interaction.followUp({
+            components,
+            flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
+        });
 
         const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
 
@@ -172,46 +125,43 @@ export class License extends BaseCommand implements ICommand {
     }
 
     protected async getNorwegianInfo(license: string) {
-        const repsone = await fetch(
+        const response = await fetch(
             `https://kjoretoyoppslag.atlas.vegvesen.no/ws/no/vegvesen/kjoretoy/kjoretoyoppslag/v1/oppslag/raw/${license}`
         );
 
-        const data: StatensVegvesenFullData = await repsone.json();
+        const data: StatensVegvesenFullData = await response.json();
 
-        const brand = Str.toTitleCase(
-            data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.generelt.merke[0].merke
-        );
-        const model = Str.toTitleCase(
-            data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.generelt.handelsbetegnelse[0]
-        );
+        const brand = data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.generelt.merke[0]?.merke ?? '';
+        const model = data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.generelt.handelsbetegnelse[0] ?? '';
 
         const engines = data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.motorOgDrivverk.motor;
 
         const fuelDescription: string[] = [];
-
         engines.forEach((engine) => {
-            const emoji = engine.drivstoff[0].drivstoffKode.kodeNavn === 'Elektrisk' ? '⚡' : '⛽';
+            const fuel = engine.drivstoff[0];
+            if (!fuel?.maksNettoEffekt) {
+                return;
+            }
 
-            fuelDescription.push(`${emoji} ${calculateHorsePower(engine.drivstoff[0].maksNettoEffekt)}PK`);
+            const emoji = fuel.drivstoffKode.kodeNavn === 'Elektrisk' ? '⚡' : '⛽';
+            fuelDescription.push(`${emoji} ${calculateHorsePower(fuel.maksNettoEffekt)}PK`);
         });
 
-        const meta = [
-            `🗓️ ${DateTime.getDiscordTimestamp(
-                new Date(data.kjoretoy.godkjenning.forstegangsGodkjenning.forstegangRegistrertDato).getTime(),
-                DiscordTimestamps.SHORT_DATE
-            )}`,
-        ];
+        const registeredTimestamp = new Date(
+            data.kjoretoy.godkjenning.forstegangsGodkjenning.forstegangRegistrertDato
+        ).getTime();
 
-        const description = fuelDescription.join('  -  ') + '\n' + meta.join('  -  ');
+        const components = LicenseView.buildNorwegian({
+            license,
+            brand,
+            model,
+            fuelDescription: fuelDescription.join('  ·  '),
+            registeredTimestamp: isNaN(registeredTimestamp) ? 0 : registeredTimestamp,
+        });
 
-        // forstegangRegistrertDato
-
-        const response = new EmbedBuilder()
-            .setTitle(`${Str.toTitleCase(brand)} ${Str.toTitleCase(model)}`)
-            .setDescription(description)
-            .setThumbnail(`https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(brand)}.png`)
-            .setFooter({ text: `🇳🇴 ${license}` });
-
-        await this.interaction.followUp({ embeds: [response] });
+        await this.interaction.followUp({
+            components,
+            flags: MessageFlags.IsComponentsV2,
+        });
     }
 }
