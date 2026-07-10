@@ -70,11 +70,12 @@ function viewData(overrides: Partial<LicenseViewData> = {}): LicenseViewData {
 }
 
 describe('LicenseView.build', () => {
-    it('renders the header with brand, model and plate', () => {
+    it('renders the header with brand, model and the plate as a dutch plate block', () => {
         const contents = textContents(LicenseView.build(viewData(), NOW));
 
         expect(contents).toContain('## Opel Corsa');
-        expect(contents).toContain('`X-897-PL`');
+        expect(contents).toContain('```ansi');
+        expect(contents).toContain(' X-897-PL ');
     });
 
     it('renders specs with power, colour, price, age and apk', () => {
