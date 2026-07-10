@@ -1,4 +1,4 @@
-import { EmbedBuilder } from 'discord.js';
+import { ContainerBuilder, SeparatorBuilder, SeparatorSpacingSize, TextDisplayBuilder } from 'discord.js';
 import { LeaderboardResult } from '../types/leaderboard';
 import { Str } from './str';
 import { License } from './license';
@@ -6,23 +6,33 @@ import { License } from './license';
 export class LeaderboardView {
     private static readonly MEDALS = ['🥇', '🥈', '🥉'];
 
-    public static build(result: LeaderboardResult): EmbedBuilder {
-        const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('🏆 Server Leaderboard');
+    public static build(result: LeaderboardResult): ContainerBuilder[] {
+        const container = new ContainerBuilder().setAccentColor(0x5865f2);
+
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent('## 🏆 Server Leaderboard'));
 
         if (result.spotters.length === 0) {
-            embed.setDescription('Er zijn nog geen spots geregistreerd in deze server.');
-            return embed;
+            container.addTextDisplayComponents(
+                new TextDisplayBuilder().setContent('Er zijn nog geen spots geregistreerd in deze server.')
+            );
+            return [container];
         }
 
-        embed.setDescription(this.buildRanking(result));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(this.buildRanking(result)));
 
         if (result.topVehicle) {
-            embed.addFields({ name: 'Meest gespot', value: this.buildTopVehicle(result) });
+            container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+            container.addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(`**Meest gespot**\n${this.buildTopVehicle(result)}`)
+            );
         }
 
-        embed.setFooter({ text: `${result.totalSpots} spots in totaal` });
+        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(`-# ${result.totalSpots} spots in totaal`)
+        );
 
-        return embed;
+        return [container];
     }
 
     private static buildRanking(result: LeaderboardResult): string {

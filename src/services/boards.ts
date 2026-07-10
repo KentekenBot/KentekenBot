@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, EmbedBuilder, User } from 'discord.js';
+import { ContainerBuilder, User } from 'discord.js';
 import { BoardView } from '../types/boards';
 import { Leaderboard } from '../queries/leaderboard';
 import { Superlatives } from '../queries/superlatives';
@@ -8,22 +8,18 @@ import { SuperlativesView } from '../util/superlatives-view';
 import { StatsView } from '../util/stats-view';
 import { BoardsView } from '../util/boards-view';
 
-export interface BoardPayload {
-    embeds: EmbedBuilder[];
-    components: ActionRowBuilder<ButtonBuilder>[];
-}
-
 export class Boards {
-    public static async render(view: BoardView, discordGuildId: string, user: User): Promise<BoardPayload> {
-        const embed = await this.buildEmbed(view, discordGuildId, user);
+    public static async render(view: BoardView, discordGuildId: string, user: User): Promise<ContainerBuilder[]> {
+        const containers = await this.buildContainers(view, discordGuildId, user);
 
-        return {
-            embeds: [embed],
-            components: [BoardsView.buildTabs(view)],
-        };
+        return BoardsView.attachTabs(containers, view);
     }
 
-    private static async buildEmbed(view: BoardView, discordGuildId: string, user: User): Promise<EmbedBuilder> {
+    private static async buildContainers(
+        view: BoardView,
+        discordGuildId: string,
+        user: User
+    ): Promise<ContainerBuilder[]> {
         if (view === 'expensive') {
             const entries = await Superlatives.mostExpensive(discordGuildId);
             return SuperlativesView.build('💰 Duurste spots', entries, 'price');

@@ -1,4 +1,12 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ContainerBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    TextDisplayBuilder,
+} from 'discord.js';
 import { BoardView } from '../types/boards';
 import { MostSpottedVehicle } from '../types/leaderboard';
 import { Str } from './str';
@@ -34,12 +42,27 @@ export class BoardsView {
         return row;
     }
 
-    public static buildMostSpotted(vehicles: MostSpottedVehicle[]): EmbedBuilder {
-        const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('🚗 Meest gespot');
+    public static attachTabs(containers: ContainerBuilder[], active: BoardView): ContainerBuilder[] {
+        const container = containers[containers.length - 1];
+
+        if (container) {
+            container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+            container.addActionRowComponents(this.buildTabs(active));
+        }
+
+        return containers;
+    }
+
+    public static buildMostSpotted(vehicles: MostSpottedVehicle[]): ContainerBuilder[] {
+        const container = new ContainerBuilder().setAccentColor(0x5865f2);
+
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent('## 🚗 Meest gespot'));
 
         if (vehicles.length === 0) {
-            embed.setDescription('Er zijn nog geen spots geregistreerd in deze server.');
-            return embed;
+            container.addTextDisplayComponents(
+                new TextDisplayBuilder().setContent('Er zijn nog geen spots geregistreerd in deze server.')
+            );
+            return [container];
         }
 
         const lines: string[] = [];
@@ -47,9 +70,9 @@ export class BoardsView {
             lines.push(this.mostSpottedLine(vehicle, index));
         });
 
-        embed.setDescription(lines.join('\n'));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(lines.join('\n')));
 
-        return embed;
+        return [container];
     }
 
     private static mostSpottedLine(vehicle: MostSpottedVehicle, index: number): string {

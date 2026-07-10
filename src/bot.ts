@@ -101,10 +101,11 @@ export class Bot {
 
         await interaction.deferUpdate();
 
-        const payload = await Boards.render(view, interaction.guildId, interaction.user);
+        const components = await Boards.render(view, interaction.guildId, interaction.user);
 
         await interaction.editReply({
-            ...payload,
+            components,
+            flags: MessageFlags.IsComponentsV2,
             allowedMentions: { users: [] },
         });
     }

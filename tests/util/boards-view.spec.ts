@@ -35,11 +35,25 @@ describe('BoardsView.buildTabs', () => {
     });
 });
 
+function textContents(containers: ReturnType<typeof BoardsView.buildMostSpotted>): string {
+    const contents: string[] = [];
+
+    for (const container of containers) {
+        for (const component of container.toJSON().components) {
+            if ('content' in component && typeof component.content === 'string') {
+                contents.push(component.content);
+            }
+        }
+    }
+
+    return contents.join('\n');
+}
+
 describe('BoardsView.buildMostSpotted', () => {
     it('shows an empty message when there are no spots', () => {
-        const embed = BoardsView.buildMostSpotted([]).toJSON();
+        const contents = textContents(BoardsView.buildMostSpotted([]));
 
-        expect(embed.description).toContain('nog geen spots');
+        expect(contents).toContain('nog geen spots');
     });
 
     it('ranks vehicles with count and last spotter', () => {
@@ -48,9 +62,23 @@ describe('BoardsView.buildMostSpotted', () => {
             { license: 'XY999Z', count: 2, lastSpotterUserId: 'user-2', brand: null, tradeName: null },
         ];
 
-        const embed = BoardsView.buildMostSpotted(vehicles).toJSON();
+        const contents = textContents(BoardsView.buildMostSpotted(vehicles));
 
-        expect(embed.description).toContain('**1.** **Volkswagen Golf** (`AB-123-C`) — 4× · laatst door <@user-1>');
-        expect(embed.description).toContain('**2.** `XY-999-Z` — 2× · laatst door <@user-2>');
+        expect(contents).toContain('**1.** **Volkswagen Golf** (`AB-123-C`) — 4× · laatst door <@user-1>');
+        expect(contents).toContain('**2.** `XY-999-Z` — 2× · laatst door <@user-2>');
+    });
+});
+
+describe('BoardsView.attachTabs', () => {
+    it('appends the tab row to the last container', () => {
+        const containers = BoardsView.attachTabs(BoardsView.buildMostSpotted([]), 'mostSpotted');
+
+        const components = containers[containers.length - 1].toJSON().components;
+        const lastComponent = components[components.length - 1];
+
+        expect('components' in lastComponent && Array.isArray(lastComponent.components)).toBe(true);
+        if ('components' in lastComponent && Array.isArray(lastComponent.components)) {
+            expect(lastComponent.components).toHaveLength(5);
+        }
     });
 });

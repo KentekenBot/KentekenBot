@@ -1,6 +1,6 @@
 import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
-import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType } from 'discord.js';
+import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, MessageFlags } from 'discord.js';
 import { Boards } from '../services/boards';
 
 export class Leaderboard extends BaseCommand implements ICommand {
@@ -21,10 +21,11 @@ export class Leaderboard extends BaseCommand implements ICommand {
             return;
         }
 
-        const payload = await Boards.render('spotters', guildId, this.interaction.user);
+        const components = await Boards.render('spotters', guildId, this.interaction.user);
 
         await this.interaction.followUp({
-            ...payload,
+            components,
+            flags: MessageFlags.IsComponentsV2,
             allowedMentions: { users: [] },
         });
     }

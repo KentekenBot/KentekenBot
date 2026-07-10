@@ -1,14 +1,28 @@
 import { LeaderboardView } from '../../src/util/leaderboard-view';
 import { LeaderboardResult } from '../../src/types/leaderboard';
 
+function textContents(containers: ReturnType<typeof LeaderboardView.build>): string {
+    const contents: string[] = [];
+
+    for (const container of containers) {
+        for (const component of container.toJSON().components) {
+            if ('content' in component && typeof component.content === 'string') {
+                contents.push(component.content);
+            }
+        }
+    }
+
+    return contents.join('\n');
+}
+
 describe('LeaderboardView', () => {
     it('shows an empty message when there are no spots', () => {
         const result: LeaderboardResult = { spotters: [], topVehicle: null, totalSpots: 0 };
 
-        const embed = LeaderboardView.build(result).toJSON();
+        const contents = textContents(LeaderboardView.build(result));
 
-        expect(embed.description).toContain('nog geen spots');
-        expect(embed.fields ?? []).toHaveLength(0);
+        expect(contents).toContain('nog geen spots');
+        expect(contents).not.toContain('Meest gespot');
     });
 
     it('ranks spotters with medals for the top three', () => {
@@ -23,12 +37,13 @@ describe('LeaderboardView', () => {
             totalSpots: 9,
         };
 
-        const embed = LeaderboardView.build(result).toJSON();
+        const contents = textContents(LeaderboardView.build(result));
 
-        expect(embed.description).toContain('🥇 <@a> — 4 spots');
-        expect(embed.description).toContain('🥈 <@b> — 3 spots');
-        expect(embed.description).toContain('🥉 <@c> — 1 spot');
-        expect(embed.description).toContain('**4.** <@d> — 1 spot');
+        expect(contents).toContain('🥇 <@a> — 4 spots');
+        expect(contents).toContain('🥈 <@b> — 3 spots');
+        expect(contents).toContain('🥉 <@c> — 1 spot');
+        expect(contents).toContain('**4.** <@d> — 1 spot');
+        expect(contents).toContain('-# 9 spots in totaal');
     });
 
     it('formats the most spotted vehicle with brand and plate', () => {
@@ -38,10 +53,9 @@ describe('LeaderboardView', () => {
             totalSpots: 4,
         };
 
-        const embed = LeaderboardView.build(result).toJSON();
-        const topField = (embed.fields ?? []).find((field) => field.name === 'Meest gespot');
+        const contents = textContents(LeaderboardView.build(result));
 
-        expect(topField?.value).toBe('**Volkswagen Golf** (`AB-123-C`) — 4 keer gespot');
+        expect(contents).toContain('**Meest gespot**\n**Volkswagen Golf** (`AB-123-C`) — 4 keer gespot');
     });
 
     it('falls back to the plate when the vehicle has no brand', () => {
@@ -51,9 +65,8 @@ describe('LeaderboardView', () => {
             totalSpots: 1,
         };
 
-        const embed = LeaderboardView.build(result).toJSON();
-        const topField = (embed.fields ?? []).find((field) => field.name === 'Meest gespot');
+        const contents = textContents(LeaderboardView.build(result));
 
-        expect(topField?.value).toBe('`AB-123-C` — 1 keer gespot');
+        expect(contents).toContain('`AB-123-C` — 1 keer gespot');
     });
 });

@@ -1,4 +1,4 @@
-import { EmbedBuilder } from 'discord.js';
+import { ContainerBuilder, TextDisplayBuilder } from 'discord.js';
 import { RankedVehicle, SuperlativeMode } from '../types/superlatives';
 import { Str } from './str';
 import { License } from './license';
@@ -7,12 +7,16 @@ import { formatCurrency } from './format-currency';
 export class SuperlativesView {
     private static readonly MEDALS = ['🥇', '🥈', '🥉'];
 
-    public static build(title: string, entries: RankedVehicle[], mode: SuperlativeMode): EmbedBuilder {
-        const embed = new EmbedBuilder().setColor(0x5865f2).setTitle(title);
+    public static build(title: string, entries: RankedVehicle[], mode: SuperlativeMode): ContainerBuilder[] {
+        const container = new ContainerBuilder().setAccentColor(0x5865f2);
+
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`## ${title}`));
 
         if (entries.length === 0) {
-            embed.setDescription('Er zijn nog geen voertuigen gespot in deze server.');
-            return embed;
+            container.addTextDisplayComponents(
+                new TextDisplayBuilder().setContent('Er zijn nog geen voertuigen gespot in deze server.')
+            );
+            return [container];
         }
 
         const lines: string[] = [];
@@ -20,9 +24,9 @@ export class SuperlativesView {
             lines.push(this.line(entry, index, mode));
         });
 
-        embed.setDescription(lines.join('\n'));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(lines.join('\n')));
 
-        return embed;
+        return [container];
     }
 
     private static line(entry: RankedVehicle, index: number, mode: SuperlativeMode): string {
