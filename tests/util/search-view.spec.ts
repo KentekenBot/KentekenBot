@@ -56,3 +56,23 @@ describe('SearchView.build', () => {
         expect(embed.footer?.text).toContain('eerste 1 getoond');
     });
 });
+
+describe('SearchView.buildRefineRow', () => {
+    it('adds a refine button carrying the current filters', () => {
+        const row = SearchView.buildRefineRow({ brand: 'Audi' }).toJSON();
+
+        expect(row.components).toHaveLength(1);
+        const button = row.components[0];
+        expect('custom_id' in button && button.custom_id).toBe('search:refine:Audi::');
+        expect('label' in button && button.label).toBe('Verfijnen');
+    });
+});
+
+describe('SearchView.buildPrompt', () => {
+    it('explains the filters and points at the refine button', () => {
+        const embed = SearchView.buildPrompt().toJSON();
+
+        expect(embed.description).toContain('minstens één filter');
+        expect(embed.description).toContain('Verfijnen');
+    });
+});

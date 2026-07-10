@@ -31,15 +31,20 @@ export class Search extends BaseCommand implements ICommand {
         }
 
         const filters = this.getFilters();
+        const components = [SearchView.buildRefineRow(filters)];
+
         if (!SearchQuery.hasFilters(filters)) {
-            await this.interaction.followUp('Geef minstens één filter op: `merk`, `kleur` of `brandstof`.');
+            await this.interaction.followUp({
+                embeds: [SearchView.buildPrompt()],
+                components,
+            });
             return;
         }
 
         const result = await SearchQuery.inGuild(guildId, filters);
         const embed = SearchView.build(result, filters);
 
-        await this.interaction.followUp({ embeds: [embed], allowedMentions: { users: [] } });
+        await this.interaction.followUp({ embeds: [embed], components, allowedMentions: { users: [] } });
     }
 
     private getFilters(): SearchFilters {

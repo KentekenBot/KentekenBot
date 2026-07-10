@@ -1,11 +1,31 @@
-import { EmbedBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import { SearchFilters, SearchResult, SearchSighting } from '../types/search';
 import { Str } from './str';
 import { License } from './license';
 import { DateTime } from './date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
+import { SearchModal } from './search-modal';
 
 export class SearchView {
+    public static buildPrompt(): EmbedBuilder {
+        return new EmbedBuilder()
+            .setColor(0x5865f2)
+            .setTitle('🔎 Spots zoeken')
+            .setDescription(
+                'Geef minstens één filter op: `merk`, `kleur` of `brandstof`.\nOf klik op **Verfijnen** om te zoeken.'
+            );
+    }
+
+    public static buildRefineRow(filters: SearchFilters): ActionRowBuilder<ButtonBuilder> {
+        return new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setCustomId(SearchModal.buttonId(filters))
+                .setLabel('Verfijnen')
+                .setEmoji('🔎')
+                .setStyle(ButtonStyle.Secondary)
+        );
+    }
+
     public static build(result: SearchResult, filters: SearchFilters): EmbedBuilder {
         const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('🔎 Zoekresultaten');
 
