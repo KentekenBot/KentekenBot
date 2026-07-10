@@ -1,6 +1,6 @@
 import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
-import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType } from 'discord.js';
+import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, MessageFlags } from 'discord.js';
 import { Search as SearchQuery } from '../queries/search';
 import { SearchView } from '../util/search-view';
 import { SearchFilters } from '../types/search';
@@ -31,20 +31,22 @@ export class Search extends BaseCommand implements ICommand {
         }
 
         const filters = this.getFilters();
-        const components = [SearchView.buildRefineRow(filters)];
 
         if (!SearchQuery.hasFilters(filters)) {
             await this.interaction.followUp({
-                embeds: [SearchView.buildPrompt()],
-                components,
+                components: SearchView.buildPrompt(filters),
+                flags: MessageFlags.IsComponentsV2,
             });
             return;
         }
 
         const result = await SearchQuery.inGuild(guildId, filters);
-        const embed = SearchView.build(result, filters);
 
-        await this.interaction.followUp({ embeds: [embed], components, allowedMentions: { users: [] } });
+        await this.interaction.followUp({
+            components: SearchView.build(result, filters),
+            flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
+        });
     }
 
     private getFilters(): SearchFilters {

@@ -1,6 +1,39 @@
 import { SearchView } from '../../src/util/search-view';
 import { SearchResult, SearchSighting } from '../../src/types/search';
 
+function textContents(containers: ReturnType<typeof SearchView.build>): string {
+    const contents: string[] = [];
+
+    for (const container of containers) {
+        for (const component of container.toJSON().components) {
+            if ('content' in component && typeof component.content === 'string') {
+                contents.push(component.content);
+            }
+        }
+    }
+
+    return contents.join('\n');
+}
+
+function buttonCustomIds(containers: ReturnType<typeof SearchView.build>): string[] {
+    const customIds: string[] = [];
+
+    for (const container of containers) {
+        for (const component of container.toJSON().components) {
+            if (!('components' in component) || !Array.isArray(component.components)) {
+                continue;
+            }
+            for (const child of component.components) {
+                if ('custom_id' in child && typeof child.custom_id === 'string') {
+                    customIds.push(child.custom_id);
+                }
+            }
+        }
+    }
+
+    return customIds;
+}
+
 function sighting(overrides: Partial<SearchSighting> & { license: string }): SearchSighting {
     return {
         createdAt: new Date('2024-01-01T00:00:00Z'),
@@ -29,50 +62,47 @@ describe('SearchView.build', () => {
     it('shows an empty message referencing the filters', () => {
         const result: SearchResult = { sightings: [], totalCount: 0, shown: 0 };
 
-        const embed = SearchView.build(result, { brand: 'Ferrari' }).toJSON();
+        const contents = textContents(SearchView.build(result, { brand: 'Ferrari' }));
 
-        expect(embed.description).toContain('Geen spots gevonden');
-        expect(embed.description).toContain('merk "Ferrari"');
+        expect(contents).toContain('Geen spots gevonden');
+        expect(contents).toContain('merk "Ferrari"');
     });
 
     it('renders a matching sighting with plate, vehicle and spotter', () => {
         const result: SearchResult = { sightings: [sighting({ license: 'AB123C' })], totalCount: 1, shown: 1 };
 
-        const embed = SearchView.build(result, { brand: 'Audi' }).toJSON();
+        const contents = textContents(SearchView.build(result, { brand: 'Audi' }));
 
-        expect(embed.description).toContain('`AB-123-C` **Audi A4**');
-        expect(embed.description).toContain('🎨 Zwart');
-        expect(embed.description).toContain('⛽ 190PK');
-        expect(embed.description).toContain('<@user-1>');
-        expect(embed.footer?.text).toBe('1 resultaat · merk "Audi"');
+        expect(contents).toContain('`AB-123-C` **Audi A4**');
+        expect(contents).toContain('🎨 Zwart');
+        expect(contents).toContain('⛽ 190PK');
+        expect(contents).toContain('<@user-1>');
+        expect(contents).toContain('-# 1 resultaat · merk "Audi"');
     });
 
     it('notes when more results exist than are shown', () => {
         const result: SearchResult = { sightings: [sighting({ license: 'AB123C' })], totalCount: 25, shown: 1 };
 
-        const embed = SearchView.build(result, { brand: 'Audi' }).toJSON();
+        const contents = textContents(SearchView.build(result, { brand: 'Audi' }));
 
-        expect(embed.footer?.text).toContain('25 resultaten');
-        expect(embed.footer?.text).toContain('eerste 1 getoond');
+        expect(contents).toContain('25 resultaten');
+        expect(contents).toContain('eerste 1 getoond');
     });
-});
 
-describe('SearchView.buildRefineRow', () => {
-    it('adds a refine button carrying the current filters', () => {
-        const row = SearchView.buildRefineRow({ brand: 'Audi' }).toJSON();
+    it('includes a refine button carrying the current filters', () => {
+        const result: SearchResult = { sightings: [sighting({ license: 'AB123C' })], totalCount: 1, shown: 1 };
 
-        expect(row.components).toHaveLength(1);
-        const button = row.components[0];
-        expect('custom_id' in button && button.custom_id).toBe('search:refine:Audi::');
-        expect('label' in button && button.label).toBe('Verfijnen');
+        const customIds = buttonCustomIds(SearchView.build(result, { brand: 'Audi' }));
+
+        expect(customIds).toEqual(['search:refine:Audi::']);
     });
 });
 
 describe('SearchView.buildPrompt', () => {
-    it('explains the filters and points at the refine button', () => {
-        const embed = SearchView.buildPrompt().toJSON();
+    it('explains the filters and includes the refine button', () => {
+        const containers = SearchView.buildPrompt({});
 
-        expect(embed.description).toContain('minstens één filter');
-        expect(embed.description).toContain('Verfijnen');
+        expect(textContents(containers)).toContain('minstens één filter');
+        expect(buttonCustomIds(containers)).toEqual(['search:refine:::']);
     });
 });

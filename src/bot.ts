@@ -106,22 +106,20 @@ export class Bot {
         await interaction.deferUpdate();
 
         const filters = SearchModal.fromSubmit(interaction);
-        const components = [SearchView.buildRefineRow(filters)];
 
         if (!Search.hasFilters(filters) || !interaction.guildId) {
             await interaction.editReply({
-                embeds: [SearchView.buildPrompt()],
-                components,
+                components: SearchView.buildPrompt(filters),
+                flags: MessageFlags.IsComponentsV2,
             });
             return;
         }
 
         const result = await Search.inGuild(interaction.guildId, filters);
-        const embed = SearchView.build(result, filters);
 
         await interaction.editReply({
-            embeds: [embed],
-            components,
+            components: SearchView.build(result, filters),
+            flags: MessageFlags.IsComponentsV2,
             allowedMentions: { users: [] },
         });
     }

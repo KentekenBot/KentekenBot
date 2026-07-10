@@ -1,4 +1,12 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ContainerBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    TextDisplayBuilder,
+} from 'discord.js';
 import { SearchFilters, SearchResult, SearchSighting } from '../types/search';
 import { Str } from './str';
 import { License } from './license';
@@ -7,42 +15,45 @@ import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { SearchModal } from './search-modal';
 
 export class SearchView {
-    public static buildPrompt(): EmbedBuilder {
-        return new EmbedBuilder()
-            .setColor(0x5865f2)
-            .setTitle('🔎 Spots zoeken')
-            .setDescription(
+    public static buildPrompt(filters: SearchFilters): ContainerBuilder[] {
+        const container = new ContainerBuilder().setAccentColor(0x5865f2);
+
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent('## 🔎 Spots zoeken'));
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(
                 'Geef minstens één filter op: `merk`, `kleur` of `brandstof`.\nOf klik op **Verfijnen** om te zoeken.'
-            );
-    }
-
-    public static buildRefineRow(filters: SearchFilters): ActionRowBuilder<ButtonBuilder> {
-        return new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-                .setCustomId(SearchModal.buttonId(filters))
-                .setLabel('Verfijnen')
-                .setEmoji('🔎')
-                .setStyle(ButtonStyle.Secondary)
+            )
         );
+
+        this.addRefineButton(container, filters);
+
+        return [container];
     }
 
-    public static build(result: SearchResult, filters: SearchFilters): EmbedBuilder {
-        const embed = new EmbedBuilder().setColor(0x5865f2).setTitle('🔎 Zoekresultaten');
+    public static build(result: SearchResult, filters: SearchFilters): ContainerBuilder[] {
+        const container = new ContainerBuilder().setAccentColor(0x5865f2);
+
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent('## 🔎 Zoekresultaten'));
 
         if (result.sightings.length === 0) {
-            embed.setDescription(`Geen spots gevonden voor ${this.filterSummary(filters)}.`);
-            return embed;
+            container.addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(`Geen spots gevonden voor ${this.filterSummary(filters)}.`)
+            );
+            this.addRefineButton(container, filters);
+            return [container];
         }
 
-        const lines: string[] = [];
         for (const sighting of result.sightings) {
-            lines.push(this.line(sighting));
+            container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(this.line(sighting)));
         }
 
-        embed.setDescription(lines.join('\n'));
-        embed.setFooter({ text: this.footer(result, filters) });
+        container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# ${this.footer(result, filters)}`));
 
-        return embed;
+        this.addRefineButton(container, filters);
+
+        return [container];
     }
 
     public static filterSummary(filters: SearchFilters): string {
@@ -59,6 +70,18 @@ export class SearchView {
         }
 
         return parts.join(', ');
+    }
+
+    private static addRefineButton(container: ContainerBuilder, filters: SearchFilters): void {
+        container.addActionRowComponents(
+            new ActionRowBuilder<ButtonBuilder>().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(SearchModal.buttonId(filters))
+                    .setLabel('Verfijnen')
+                    .setEmoji('🔎')
+                    .setStyle(ButtonStyle.Secondary)
+            )
+        );
     }
 
     private static line(sighting: SearchSighting): string {
