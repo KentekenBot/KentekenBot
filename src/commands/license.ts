@@ -20,6 +20,8 @@ import { calculateHorsePower } from '../util/calulate-horse-power';
 import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen';
 import { Vehicles } from '../services/vehicles';
 import { Vehicle } from '../models';
+import { FirstSpotter } from '../queries/first-spotter';
+import { FirstSpotBadge } from '../util/first-spot-badge';
 
 export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -79,6 +81,12 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
+        const isFirstModel = await FirstSpotter.isFirstModelInGuild(
+            this.interaction.guildId,
+            vehicleInfo.merk,
+            vehicleInfo.handelsbenaming
+        );
+
         const fuelDescription: string[] = [];
         fuelInfo.engines.forEach((engine) => {
             fuelDescription.push(engine.getHorsePowerDescription());
@@ -105,6 +113,12 @@ export class License extends BaseCommand implements ICommand {
                 `https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(vehicleInfo.merk)}.png`
             )
             .setFooter({ text: vehicleType ? `${formattedLicense} • ${vehicleType}` : formattedLicense });
+
+        if (isFirstModel) {
+            response.addFields([
+                { name: '🥇 Primeur', value: FirstSpotBadge.message(vehicleInfo.merk, vehicleInfo.handelsbenaming) },
+            ]);
+        }
 
         const comment = this.getComment();
         if (comment) {
