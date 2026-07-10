@@ -1,6 +1,6 @@
 import { Sighting } from '../models/sighting';
 import { Vehicle } from '../models/vehicle';
-import { escapeMarkdown, Guild, User } from 'discord.js';
+import { escapeMarkdown, User } from 'discord.js';
 import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { Str } from '../util/str';
@@ -173,14 +173,14 @@ export class Sightings {
         author: User,
         interactionId: string,
         channelId: string | null,
-        guild: Guild | null,
+        discordGuildId: string | null,
         comment: null | string = null,
         vehicleId: number | null
     ): void {
         Sighting.create({
             license,
             discordUserId: author.id,
-            discordGuildId: guild?.id,
+            discordGuildId: discordGuildId ?? undefined,
             discordChannelId: channelId ?? undefined,
             discordInteractionId: interactionId,
             comment: comment ? Str.limitCharacters(escapeMarkdown(comment), 255) : null,
