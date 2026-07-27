@@ -81,6 +81,8 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
+        const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
+
         const isFirstModel = await FirstSpotter.isFirstModelInGuild(
             this.interaction.guildId,
             vehicleInfo.merk,
@@ -141,8 +143,6 @@ export class License extends BaseCommand implements ICommand {
         );
 
         await this.interaction.followUp({ embeds: [response], components: [links] });
-
-        const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
 
         this.insertSighting(license, vehicle.id);
 
