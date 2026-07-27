@@ -11,7 +11,9 @@ import {
     SlashCommandBuilder,
     InteractionContextType,
     ApplicationIntegrationType,
+    AutocompleteInteraction,
 } from 'discord.js';
+import { SpotSuggestions } from '../queries/spot-suggestions';
 import { Sightings } from '../queries/sightings';
 import { FuelInfo } from '../models/fuel-info';
 import { DateTime } from '../util/date-time';
@@ -32,12 +34,21 @@ export class License extends BaseCommand implements ICommand {
             )
             .setIntegrationTypes(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)
             .setDescription('Haal een kenteken op')
-            .addStringOption((option) => option.setName('kenteken').setDescription('Het kenteken').setRequired(true))
+            .addStringOption((option) =>
+                option.setName('kenteken').setDescription('Het kenteken').setRequired(true).setAutocomplete(true)
+            )
             .addStringOption((option) =>
                 option.setName('commentaar').setDescription('Voeg commentaar toe aan je spot')
             );
 
         return builder;
+    }
+
+    public async autocomplete(interaction: AutocompleteInteraction): Promise<void> {
+        const focused = interaction.options.getFocused();
+        const choices = await SpotSuggestions.forUser(interaction.user.id, focused);
+
+        await interaction.respond(choices);
     }
 
     public async handle(): Promise<void> {
