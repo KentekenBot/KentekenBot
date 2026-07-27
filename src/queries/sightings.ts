@@ -103,6 +103,14 @@ export class Sightings {
         };
     }
 
+    public static async countForLicense(license: string, discordGuildId: string | null): Promise<number | null> {
+        if (!discordGuildId) {
+            return null;
+        }
+
+        return Sighting.count({ where: { license, discordGuildId } });
+    }
+
     public static async list(
         license: string,
         discordGuildId: string | null,

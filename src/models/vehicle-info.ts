@@ -41,6 +41,7 @@ export class VehicleInfo extends BaseModel {
     public datum_eerste_toelating_dt = '';
     public datum_eerste_tenaamstelling_in_nederland_dt = '';
     public catalogusprijs = '';
+    public vervaldatum_apk_dt = '';
 
     public constructor(data: Record<string, unknown>) {
         super();
@@ -87,5 +88,25 @@ export class VehicleInfo extends BaseModel {
         }
 
         return `💵 ${formatCurrency(price)}`;
+    }
+
+    public getApkExpiryTimestamp(): number | null {
+        if (!this.vervaldatum_apk_dt) {
+            return null;
+        }
+
+        const timestamp = new Date(this.vervaldatum_apk_dt).getTime();
+
+        return isNaN(timestamp) ? null : timestamp;
+    }
+
+    public getFirstRegistrationInNetherlandsTimestamp(): number | null {
+        if (!this.datum_eerste_tenaamstelling_in_nederland_dt) {
+            return null;
+        }
+
+        const timestamp = new Date(this.datum_eerste_tenaamstelling_in_nederland_dt).getTime();
+
+        return isNaN(timestamp) ? null : timestamp;
     }
 }
