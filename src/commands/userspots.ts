@@ -1,7 +1,7 @@
 import { ICommand } from '../interfaces/command';
 import { BaseCommand } from './base-command';
 import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, MessageFlags } from 'discord.js';
-import { Sightings } from '../services/sightings';
+import { Sightings } from '../queries/sightings';
 import { SightingsView } from '../util/sightings-view';
 
 export class UserSpots extends BaseCommand implements ICommand {

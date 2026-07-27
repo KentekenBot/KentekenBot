@@ -4,7 +4,7 @@ import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
 import { Heartbeat } from './services/heartbeat';
 import { CommandCollection } from './services/command-collection';
-import { Sightings } from './services/sightings';
+import { Sightings } from './queries/sightings';
 import { SightingsView } from './util/sightings-view';
 
 export class Bot {

@@ -7,7 +7,7 @@ import {
     SeparatorSpacingSize,
     TextDisplayBuilder,
 } from 'discord.js';
-import { PaginatedResult, PaginatedSighting } from '../services/sightings';
+import { PaginatedResult, PaginatedSighting } from '../queries/sightings';
 import { DateTime } from './date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { Str } from './str';
