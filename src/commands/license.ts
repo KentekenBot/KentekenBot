@@ -143,7 +143,7 @@ export class License extends BaseCommand implements ICommand {
             this.interaction.user,
             this.interaction.id,
             this.interaction.channelId,
-            this.interaction.guild,
+            this.interaction.guildId,
             this.getComment(),
             vehicleId
         );
