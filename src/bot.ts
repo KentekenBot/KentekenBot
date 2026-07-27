@@ -6,6 +6,9 @@ import { Heartbeat } from './services/heartbeat';
 import { CommandCollection } from './services/command-collection';
 import { Sightings } from './queries/sightings';
 import { SightingsView } from './util/sightings-view';
+import { Search } from './queries/search';
+import { SearchModal } from './util/search-modal';
+import { SearchView } from './util/search-view';
 
 export class Bot {
     private client = new Client({
@@ -56,6 +59,11 @@ export class Bot {
             this.handleAutocomplete(interaction);
             return;
         }
+
+        if (interaction.isModalSubmit()) {
+            this.handleModal(interaction);
+            return;
+        }
     }
 
     private handleAutocomplete(interaction: Interaction): void {
@@ -99,7 +107,42 @@ export class Bot {
 
         if (customId.startsWith('userspots:') || customId.startsWith('serverspots:')) {
             await this.handleSpotsPageChange(interaction, customId);
+            return;
         }
+
+        if (customId.startsWith(SearchModal.BUTTON_PREFIX)) {
+            await interaction.showModal(SearchModal.build(SearchModal.parseButtonId(customId)));
+        }
+    }
+
+    private async handleModal(interaction: Interaction): Promise<void> {
+        if (!interaction.isModalSubmit() || interaction.customId !== SearchModal.MODAL_ID) {
+            return;
+        }
+
+        if (!interaction.isFromMessage()) {
+            return;
+        }
+
+        await interaction.deferUpdate();
+
+        const filters = SearchModal.fromSubmit(interaction);
+
+        if (!Search.hasFilters(filters) || !interaction.guildId) {
+            await interaction.editReply({
+                components: SearchView.buildPrompt(filters),
+                flags: MessageFlags.IsComponentsV2,
+            });
+            return;
+        }
+
+        const result = await Search.inGuild(interaction.guildId, filters);
+
+        await interaction.editReply({
+            components: SearchView.build(result, filters),
+            flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
+        });
     }
 
     private async handleSpotsPageChange(interaction: Interaction, customId: string): Promise<void> {
