@@ -9,6 +9,9 @@ import { SightingsView } from './util/sightings-view';
 import { Search } from './queries/search';
 import { SearchModal } from './util/search-modal';
 import { SearchView } from './util/search-view';
+import { Boards } from './services/boards';
+import { BoardsView } from './util/boards-view';
+import { isBoardView } from './types/boards';
 
 export class Bot {
     private client = new Client({
@@ -112,7 +115,33 @@ export class Bot {
 
         if (customId.startsWith(SearchModal.BUTTON_PREFIX)) {
             await interaction.showModal(SearchModal.build(SearchModal.parseButtonId(customId)));
+            return;
         }
+
+        if (customId.startsWith(`${BoardsView.BUTTON_PREFIX}:`)) {
+            await this.handleBoardChange(interaction, customId);
+        }
+    }
+
+    private async handleBoardChange(interaction: Interaction, customId: string): Promise<void> {
+        if (!interaction.isButton() || !interaction.guildId) {
+            return;
+        }
+
+        const view = customId.split(':')[1];
+        if (!isBoardView(view)) {
+            return;
+        }
+
+        await interaction.deferUpdate();
+
+        const components = await Boards.render(view, interaction.guildId, interaction.user);
+
+        await interaction.editReply({
+            components,
+            flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
+        });
     }
 
     private async handleModal(interaction: Interaction): Promise<void> {
