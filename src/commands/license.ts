@@ -22,6 +22,8 @@ import { calculateHorsePower } from '../util/calulate-horse-power';
 import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen';
 import { Vehicles } from '../queries/vehicles';
 import { Vehicle } from '../models';
+import { FirstSpotter } from '../queries/first-spotter';
+import { FirstSpotBadge } from '../util/first-spot-badge';
 
 export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -90,6 +92,14 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
+        const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
+
+        const isFirstModel = await FirstSpotter.isFirstModelInGuild(
+            this.interaction.guildId,
+            vehicleInfo.merk,
+            vehicleInfo.handelsbenaming
+        );
+
         const fuelDescription: string[] = [];
         fuelInfo.engines.forEach((engine) => {
             fuelDescription.push(engine.getHorsePowerDescription());
@@ -117,6 +127,12 @@ export class License extends BaseCommand implements ICommand {
             )
             .setFooter({ text: vehicleType ? `${formattedLicense} • ${vehicleType}` : formattedLicense });
 
+        if (isFirstModel) {
+            response.addFields([
+                { name: '🥇 Primeur', value: FirstSpotBadge.message(vehicleInfo.merk, vehicleInfo.handelsbenaming) },
+            ]);
+        }
+
         const comment = this.getComment();
         if (comment) {
             response.addFields([{ name: 'Commentaar:', value: comment }]);
@@ -138,8 +154,6 @@ export class License extends BaseCommand implements ICommand {
         );
 
         await this.interaction.followUp({ embeds: [response], components: [links] });
-
-        const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
 
         this.insertSighting(license, vehicle.id);
 
