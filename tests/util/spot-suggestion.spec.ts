@@ -9,6 +9,16 @@ describe('SpotSuggestion.normalizeQuery', () => {
     it('returns an empty string for an empty query', () => {
         expect(SpotSuggestion.normalizeQuery('')).toBe('');
     });
+
+    it('strips LIKE wildcards so they cannot widen the search', () => {
+        expect(SpotSuggestion.normalizeQuery('%')).toBe('');
+        expect(SpotSuggestion.normalizeQuery('_')).toBe('');
+        expect(SpotSuggestion.normalizeQuery('ab%12_c')).toBe('AB12C');
+    });
+
+    it('strips any other non-alphanumeric character', () => {
+        expect(SpotSuggestion.normalizeQuery("ab'123;c")).toBe('AB123C');
+    });
 });
 
 describe('SpotSuggestion.label', () => {

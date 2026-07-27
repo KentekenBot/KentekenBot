@@ -3,7 +3,7 @@ import { License } from './license';
 
 export class SpotSuggestion {
     public static normalizeQuery(input: string): string {
-        return input.toUpperCase().replace(/[-\s]/g, '');
+        return input.toUpperCase().replace(/[^A-Z0-9]/g, '');
     }
 
     public static label(license: string, brand: string | null, tradeName: string | null): string {
