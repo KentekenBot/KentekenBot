@@ -36,7 +36,7 @@ export class Boards {
         }
 
         if (view === 'stats') {
-            const profile = await VehicleStats.forUser(user.id);
+            const profile = await VehicleStats.forUser(user.id, discordGuildId);
             return StatsView.build(profile, user.displayName);
         }
 

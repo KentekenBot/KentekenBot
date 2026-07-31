@@ -1,4 +1,10 @@
-import { ContainerBuilder, SeparatorBuilder, SeparatorSpacingSize, TextDisplayBuilder } from 'discord.js';
+import {
+    ContainerBuilder,
+    escapeMarkdown,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    TextDisplayBuilder,
+} from 'discord.js';
 import { StatsProfile } from '../types/stats.types';
 import { NamedVehicle } from '../types/spot.types';
 import { Str } from './str';
@@ -10,7 +16,10 @@ export class StatsView {
     public static build(profile: StatsProfile, displayName: string): ContainerBuilder[] {
         const container = new ContainerBuilder().setAccentColor(0x5865f2);
 
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`## 📊 ${displayName}'s stats`));
+        // A display name is user controlled, and it lands in a markdown heading.
+        container.addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(`## 📊 ${escapeMarkdown(displayName)}'s stats`)
+        );
 
         if (profile.totalSpots === 0) {
             container.addTextDisplayComponents(

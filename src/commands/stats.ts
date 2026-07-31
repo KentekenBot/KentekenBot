@@ -32,12 +32,23 @@ export class Stats extends BaseCommand implements ICommand {
         await this.interaction.deferReply();
 
         const target = this.getTargetUser();
-        const profile = await VehicleStats.forUser(target.id);
+        const guildId = this.interaction.guildId;
+
+        // Outside a server there is no scope to limit the answer to, so the only
+        // profile that can be shown without exposing someone's other servers is your
+        // own.
+        if (!guildId && target.id !== this.interaction.user.id) {
+            await this.interaction.followUp('Buiten een server kan ik alleen jouw eigen stats laten zien.');
+            return;
+        }
+
+        const profile = await VehicleStats.forUser(target.id, guildId);
         const components = StatsView.build(profile, target.displayName);
 
         await this.interaction.followUp({
             components,
             flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
         });
     }
 
