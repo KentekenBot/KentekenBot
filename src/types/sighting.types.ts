@@ -18,3 +18,17 @@ export interface PaginatedResult {
     hasNextPage: boolean;
     hasPreviousPage: boolean;
 }
+
+export interface SightingsSpotter {
+    discordUserId: string;
+    count: number;
+}
+
+export interface SightingsSummary {
+    total: number;
+    spotters: SightingsSpotter[];
+    lastSightingAt: number;
+    lastSightingUrl: string | null;
+    lastComment: string | null;
+    needsUpdate: boolean;
+}

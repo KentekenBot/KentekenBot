@@ -1,12 +1,10 @@
 import { SvgRenderer } from './svg-renderer';
+import { SvgFragment } from '../types/svg-fragment.types';
 
 export class DutchPlate {
-    public static readonly FILE_NAME = 'kenteken.png';
-
     private static readonly PLATE_FONT = SvgRenderer.PLATE_FONT_FAMILY;
     private static readonly STRIP_FONT = SvgRenderer.TEXT_FONT_FAMILY;
 
-    private static readonly SCALE = 0.75;
     private static readonly HEIGHT = 100;
     private static readonly STRIP_WIDTH = 62;
     private static readonly CORNER_RADIUS = 14;
@@ -63,18 +61,13 @@ export class DutchPlate {
     private static readonly STAR_YELLOW = '#FFCC00';
     private static readonly TEXT_DARK = '#111111';
 
-    public static render(formattedLicense: string): Buffer {
-        return SvgRenderer.toPng(this.buildSvg(formattedLicense), this.SCALE);
-    }
-
-    private static buildSvg(formattedLicense: string): string {
+    public static buildFragment(formattedLicense: string): SvgFragment {
         const textWidth = this.textWidth(formattedLicense);
         const width = Math.round(this.STRIP_WIDTH + this.SIDE_PADDING * 2 + textWidth);
         const textCenter = this.STRIP_WIDTH + (width - this.STRIP_WIDTH) / 2;
         const baseline = (this.HEIGHT + this.CAP_HEIGHT_EM * this.FONT_SIZE) / 2;
 
-        return [
-            `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${this.HEIGHT}" viewBox="0 0 ${width} ${this.HEIGHT}">`,
+        const markup = [
             `<rect width="${width}" height="${this.HEIGHT}" rx="${this.CORNER_RADIUS}" fill="${this.PLATE_YELLOW}"/>`,
             this.buildStrip(),
             this.buildStars(),
@@ -84,8 +77,9 @@ export class DutchPlate {
             `<text x="${textCenter}" y="${baseline}" font-family="${this.PLATE_FONT}" font-size="${
                 this.FONT_SIZE
             }" text-anchor="middle" fill="${this.TEXT_DARK}">${SvgRenderer.escape(formattedLicense)}</text>`,
-            '</svg>',
         ].join('');
+
+        return { markup, width, height: this.HEIGHT };
     }
 
     private static textWidth(formattedLicense: string): number {

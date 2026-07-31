@@ -1,10 +1,14 @@
 import { Sighting } from '../models/sighting';
 import { Vehicle } from '../models/vehicle';
 import { escapeMarkdown, User } from 'discord.js';
-import { DateTime } from '../util/date-time';
-import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { Str } from '../util/str';
-import { PaginatedResult, PaginatedSighting, PaginatedVehicle } from '../types/sighting.types';
+import {
+    PaginatedResult,
+    PaginatedSighting,
+    PaginatedVehicle,
+    SightingsSpotter,
+    SightingsSummary,
+} from '../types/sighting.types';
 
 export class Sightings {
     private static readonly ITEMS_PER_PAGE = 6;
@@ -97,69 +101,63 @@ export class Sightings {
         return Sighting.count({ where: { license, discordGuildId } });
     }
 
-    public static async list(
+    // A summary instead of a row per sighting: a car spotted forty times produced
+    // forty near-identical lines, which pushed the rest of the reply off screen. The
+    // rows are read in full because the counts are per spotter.
+    public static async summary(
         license: string,
         discordGuildId: string | null,
-        discordUserId: string,
-        limit = 10
-    ): Promise<{ list: string; needsUpdate: boolean } | null> {
-        let where;
+        discordUserId: string
+    ): Promise<SightingsSummary | null> {
+        const where = discordGuildId != null ? { license, discordGuildId } : { license, discordUserId };
 
-        if (discordGuildId != null) {
-            where = {
-                license: license,
-                discordGuildId: discordGuildId,
-            };
-        } else {
-            where = {
-                license: license,
-                discordUserId: discordUserId,
-            };
-        }
-
-        const sightingData = await Sighting.findAndCountAll({
-            limit,
-            order: [['createdAt', 'DESC']],
+        const rows = await Sighting.findAll({
             where,
+            order: [['createdAt', 'DESC']],
         });
 
-        if (sightingData.count === 0) {
+        if (rows.length === 0) {
             return null;
         }
 
-        const needsUpdate = sightingData.rows.some((sighting) => sighting.vehicleId === null);
+        const counts = new Map<string, number>();
+        let needsUpdate = false;
 
-        const sightings = sightingData.rows.map((sighting) => {
-            const text = [`<@${sighting.discordUserId}>`];
+        for (const row of rows) {
+            counts.set(row.discordUserId, (counts.get(row.discordUserId) ?? 0) + 1);
 
-            const timestampText = DateTime.getDiscordTimestamp(
-                sighting.createdAt.getTime(),
-                DiscordTimestamps.RELATIVE
-            );
-            if (sighting.discordChannelId && sighting.discordInteractionId) {
-                text.push(
-                    `[${timestampText}](https://discordapp.com/channels/${sighting.discordGuildId}/${sighting.discordChannelId}/${sighting.discordInteractionId})`
-                );
-            } else {
-                text.push(timestampText);
+            if (row.vehicleId === null) {
+                needsUpdate = true;
             }
-
-            if (sighting.comment) {
-                text.push(`_${Str.limitCharacters(sighting.comment, 100)}_`);
-            }
-
-            return text.join(' - ');
-        });
-
-        const count = sightingData.count;
-        if (count > limit) {
-            sightings.push(`En ${count - 10} andere ${count - 10 == 1 ? 'keer' : 'keren'} gespot.`);
         }
 
+        const spotters: SightingsSpotter[] = [];
+        for (const [spotterId, count] of counts) {
+            spotters.push({ discordUserId: spotterId, count });
+        }
+
+        spotters.sort(function (first: SightingsSpotter, second: SightingsSpotter): number {
+            return second.count - first.count;
+        });
+
+        const newest = rows[0];
+
         return {
-            list: sightings.join('\n'),
+            total: rows.length,
+            spotters,
+            lastSightingAt: newest.createdAt.getTime(),
+            lastSightingUrl: this.sightingUrl(newest),
+            lastComment: newest.comment ? Str.limitCharacters(newest.comment, 100) : null,
             needsUpdate,
         };
+    }
+
+    private static sightingUrl(sighting: Sighting): string | null {
+        if (!sighting.discordGuildId || !sighting.discordChannelId || !sighting.discordInteractionId) {
+            return null;
+        }
+
+        return `https://discordapp.com/channels/${sighting.discordGuildId}/${sighting.discordChannelId}/${sighting.discordInteractionId}`;
     }
 
     public static insert(

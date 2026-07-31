@@ -1,21 +1,25 @@
 import { DutchPlate } from '../../src/util/dutch-plate';
 
-const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+describe('DutchPlate.buildFragment', () => {
+    it('renders the plate markup with the license on it', () => {
+        const plate = DutchPlate.buildFragment('X-897-PL');
 
-describe('DutchPlate.render', () => {
-    it('renders a png buffer', () => {
-        const plate = DutchPlate.render('X-897-PL');
-
-        expect(Buffer.isBuffer(plate)).toBe(true);
-        expect(plate.subarray(0, 8)).toEqual(PNG_MAGIC);
+        expect(plate.markup).toContain('X-897-PL');
+        expect(plate.markup).not.toContain('<svg');
+        expect(plate.height).toBeGreaterThan(0);
     });
 
-    it('renders a wider plate for a longer license', () => {
-        const short = DutchPlate.render('1-AB-12');
-        const long = DutchPlate.render('XX-897-PL');
+    it('measures a wider plate for a longer license', () => {
+        const short = DutchPlate.buildFragment('1-AB-12');
+        const long = DutchPlate.buildFragment('XX-897-PL');
 
-        expect(long.length).toBeGreaterThan(0);
-        expect(short.length).toBeGreaterThan(0);
-        expect(DutchPlate.FILE_NAME).toBe('kenteken.png');
+        expect(long.width).toBeGreaterThan(short.width);
+        expect(long.height).toBe(short.height);
+    });
+
+    it('escapes the license instead of injecting it into the markup', () => {
+        const plate = DutchPlate.buildFragment('<X>');
+
+        expect(plate.markup).toContain('&lt;X&gt;');
     });
 });

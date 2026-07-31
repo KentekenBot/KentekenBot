@@ -4,49 +4,46 @@ import { SvgRenderer } from './svg-renderer';
 import { BrandLogoResult } from '../types/brand-logo.types';
 
 export class BrandLogo {
-    public static readonly FALLBACK_FILE_NAME = 'merk-onbekend.png';
+    public static readonly FILE_NAME = 'merk.png';
 
     private static readonly BASE_URL = 'https://www.kentekencheck.nl/assets/img/brands';
     private static readonly TIMEOUT_MS = 2500;
-    private static readonly SIZE = 128;
+    // Matches the resolution of the remote logos, so the fallback survives being
+    // drawn into the plate card just as well.
+    private static readonly SIZE = 256;
 
-    // kentekencheck does not 404 on a missing logo, it redirects to an HTML
-    // "niet gevonden" page. Discord then renders a broken thumbnail, so the
-    // response has to be checked before the url is handed over.
-    private static readonly availability = new Map<string, boolean>();
+    // The bytes are needed, not just a url: the logo is drawn into the plate card
+    // as an embedded image. Only png is accepted, because that is what
+    // kentekencheck serves and what the renderer can embed without conversion.
+    private static readonly CONTENT_TYPE = 'image/png';
+
+    private static readonly cache = new Map<string, Buffer>();
 
     public static async resolve(brand: string): Promise<BrandLogoResult> {
-        const url = this.url(brand);
+        const key = Str.humanToSnakeCase(brand);
 
-        if (await this.isImage(url)) {
-            return { url, attachment: null };
+        const cached = this.cache.get(key);
+        if (cached) {
+            return { image: cached };
         }
 
-        return {
-            url: `attachment://${this.FALLBACK_FILE_NAME}`,
-            attachment: this.renderFallback(brand),
-        };
+        const downloaded = await this.download(this.url(brand));
+        const image = downloaded ?? this.renderFallback(brand);
+        this.cache.set(key, image);
+
+        return { image };
     }
 
     public static url(brand: string): string {
         return `${this.BASE_URL}/${Str.humanToSnakeCase(brand)}.png`;
     }
 
-    private static async isImage(url: string): Promise<boolean> {
-        const cached = this.availability.get(url);
-        if (cached !== undefined) {
-            return cached;
-        }
-
-        const available = await this.checkRemote(url);
-        this.availability.set(url, available);
-
-        return available;
-    }
-
-    private static async checkRemote(url: string): Promise<boolean> {
+    // kentekencheck does not 404 on a missing logo, it redirects to an HTML
+    // "niet gevonden" page, so the response has to be checked before it is used.
+    private static async download(url: string): Promise<Buffer | null> {
         try {
-            const response = await axios.head(url, {
+            const response = await axios.get<ArrayBuffer>(url, {
+                responseType: 'arraybuffer',
                 timeout: this.TIMEOUT_MS,
                 maxRedirects: 0,
                 validateStatus: function (status: number): boolean {
@@ -54,11 +51,21 @@ export class BrandLogo {
                 },
             });
 
-            const contentType = String(response.headers['content-type'] ?? '');
+            if (response.status !== 200) {
+                return null;
+            }
 
-            return response.status === 200 && contentType.startsWith('image/');
+            const contentType = String(response.headers['content-type'] ?? '')
+                .split(';')[0]
+                .trim();
+
+            if (contentType !== this.CONTENT_TYPE) {
+                return null;
+            }
+
+            return Buffer.from(response.data);
         } catch {
-            return false;
+            return null;
         }
     }
 
@@ -67,14 +74,16 @@ export class BrandLogo {
         const size = this.SIZE;
         const center = size / 2;
 
+        const stroke = size / 32;
+
         const svg = [
             `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`,
             `<circle cx="${center}" cy="${center}" r="${
-                center - 4
-            }" fill="#2B2D31" stroke="#4E5058" stroke-width="4"/>`,
-            `<text x="${center}" y="${center + 22}" font-family="${
-                SvgRenderer.TEXT_FONT_FAMILY
-            }" font-size="64" font-weight="bold" text-anchor="middle" fill="#B5BAC1">${initial}</text>`,
+                center - stroke
+            }" fill="#2B2D31" stroke="#4E5058" stroke-width="${stroke}"/>`,
+            `<text x="${center}" y="${center + size / 6}" font-family="${SvgRenderer.TEXT_FONT_FAMILY}" font-size="${
+                size / 2
+            }" font-weight="bold" text-anchor="middle" fill="#B5BAC1">${initial}</text>`,
             '</svg>',
         ].join('');
 

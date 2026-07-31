@@ -1,11 +1,18 @@
 import { ComponentType, ContainerBuilder } from 'discord.js';
 import { LicenseView } from '../../src/util/license-view';
 import { LicenseViewData } from '../../src/types/license-view.types';
+import { SightingsSummary } from '../../src/types/sighting.types';
 import { VehicleInfo } from '../../src/models/vehicle-info';
 import { FuelInfo } from '../../src/models/fuel-info';
 import { EngineInfo } from '../../src/models/engine-info';
 
 const NOW = new Date('2026-07-10T12:00:00Z').getTime();
+
+// A 1x1 transparent png, enough for the hero card to embed something.
+const LOGO = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==',
+    'base64'
+);
 
 function textContents(containers: ContainerBuilder[]): string {
     const contents: string[] = [];
@@ -26,6 +33,14 @@ function textContents(containers: ContainerBuilder[]): string {
     }
 
     return contents.join('\n');
+}
+
+function gallery(containers: ContainerBuilder[]): string {
+    const component = containers[0].toJSON().components.find(function (candidate) {
+        return candidate.type === ComponentType.MediaGallery;
+    });
+
+    return JSON.stringify(component);
 }
 
 function vehicleInfo(overrides: Record<string, unknown> = {}): VehicleInfo {
@@ -56,6 +71,21 @@ function fuelInfo(engines: Record<string, unknown>[]): FuelInfo {
     return info;
 }
 
+function sightingsSummary(overrides: Partial<SightingsSummary> = {}): SightingsSummary {
+    return {
+        total: 8,
+        spotters: [
+            { discordUserId: 'user-1', count: 6 },
+            { discordUserId: 'user-2', count: 2 },
+        ],
+        lastSightingAt: NOW - 1000 * 60 * 4,
+        lastSightingUrl: null,
+        lastComment: null,
+        needsUpdate: false,
+        ...overrides,
+    };
+}
+
 function viewData(overrides: Partial<LicenseViewData> = {}): LicenseViewData {
     return {
         vehicleInfo: vehicleInfo(),
@@ -64,49 +94,58 @@ function viewData(overrides: Partial<LicenseViewData> = {}): LicenseViewData {
         vehicleType: null,
         badge: null,
         comment: null,
-        sightingsList: null,
+        sightings: null,
         spotCount: null,
-        logo: { url: 'https://www.kentekencheck.nl/assets/img/brands/opel.png', attachment: null },
+        logo: { image: LOGO },
         ...overrides,
     };
 }
 
 describe('LicenseView.build', () => {
-    it('renders the header with brand and model', () => {
-        const contents = textContents(LicenseView.build(viewData(), NOW).components);
-
-        expect(contents).toContain('## Opel Corsa');
-    });
-
-    it('attaches the plate as an image and references it from the container', () => {
+    it('attaches the hero card and references it from the container', () => {
         const { components, files } = LicenseView.build(viewData(), NOW);
 
         expect(files).toHaveLength(1);
-        expect(files[0].name).toBe('kenteken.png');
-
-        const gallery = components[0]
-            .toJSON()
-            .components.find((component) => component.type === ComponentType.MediaGallery);
-
-        expect(gallery).toBeDefined();
-        expect(JSON.stringify(gallery)).toContain('attachment://kenteken.png');
+        expect(gallery(components)).toContain(`attachment://${files[0].name}`);
     });
 
-    it('renders specs with power, colour, price, date and apk', () => {
-        const contents = textContents(LicenseView.build(viewData(), NOW).components);
+    // The brand, model and plate are drawn into the image, so they have to stay in
+    // message text somewhere for Discord's search to reach them.
+    it('keeps the brand, model and plate searchable in the caption', () => {
+        const contents = textContents(LicenseView.build(viewData({ spotCount: 3 }), NOW).components);
 
-        expect(contents).toContain('⛽ 101PK');
-        expect(contents).toContain('🎨 Grijs');
-        expect(contents).toContain('💵');
-        expect(contents).toContain('🗓️');
-        expect(contents).toContain('🔧 APK tot');
+        expect(contents).toContain('-# Opel Corsa · X-897-PL · 3× gespot in deze server');
     });
 
-    it('does not show the age next to the construction date', () => {
-        const contents = textContents(LicenseView.build(viewData(), NOW).components);
+    it('names the attachment after the car so it can be found by filename', () => {
+        const { files } = LicenseView.build(viewData(), NOW);
 
-        expect(contents).not.toMatch(/\(\d+ (jaar|maand|maanden)\)/);
-        expect(contents).not.toContain('(nieuw)');
+        expect(files[0].name).toBe('opel-corsa-x897pl.png');
+    });
+
+    it('falls back to the plate as the attachment name when the model is unknown', () => {
+        const data = viewData({ vehicleInfo: vehicleInfo({ merk: '', handelsbenaming: '' }) });
+        const { files } = LicenseView.build(data, NOW);
+
+        expect(files[0].name).toBe('x897pl.png');
+    });
+
+    // Mobile clients turn an item description into a caption strip over the image,
+    // repeating the caption line underneath it.
+    it('does not describe the image', () => {
+        expect(gallery(LicenseView.build(viewData(), NOW).components)).not.toContain('description');
+    });
+
+    it('renders the specs the card does not carry, without emoji or date pills', () => {
+        const contents = textContents(LicenseView.build(viewData({ vehicleType: 'Personenauto' }), NOW).components);
+
+        // Intl puts a non-breaking space after the euro sign.
+        expect(contents).toContain('**Benzine** · Grijs · Personenauto · € 27.247');
+        expect(contents).not.toContain('⛽');
+        expect(contents).not.toContain('🎨');
+        expect(contents).not.toContain('💵');
+        expect(contents).not.toContain('🗓️');
+        expect(contents).not.toMatch(/<t:\d+:d>/);
     });
 
     it('skips missing fields instead of showing placeholders', () => {
@@ -122,15 +161,12 @@ describe('LicenseView.build', () => {
 
         const contents = textContents(LicenseView.build(data, NOW).components);
 
-        expect(contents).not.toContain('🎨');
-        expect(contents).not.toContain('💵');
         expect(contents).not.toContain('Onbekend');
         expect(contents).not.toContain('APK');
-        expect(contents).not.toContain('🗓️');
-        expect(contents).toContain('## Opel Corsa');
+        expect(contents).toContain('-# Opel Corsa · X-897-PL');
     });
 
-    it('shows both engines of a hybrid', () => {
+    it('shows both fuels of a hybrid', () => {
         const data = viewData({
             fuelInfo: fuelInfo([
                 { nettomaximumvermogen: '74', brandstof_omschrijving: 'Benzine' },
@@ -138,26 +174,18 @@ describe('LicenseView.build', () => {
             ]),
         });
 
-        const contents = textContents(LicenseView.build(data, NOW).components);
-
-        expect(contents).toContain('⛽ 101PK');
-        expect(contents).toContain('⚡ 68PK');
+        expect(textContents(LicenseView.build(data, NOW).components)).toContain('**Benzine + Elektriciteit**');
     });
 
-    it('falls back to the plate as title when brand and model are missing', () => {
-        const data = viewData({ vehicleInfo: vehicleInfo({ merk: '', handelsbenaming: '' }) });
+    it('only mentions the apk in text when it needs attention', () => {
+        const healthy = textContents(LicenseView.build(viewData(), NOW).components);
+        expect(healthy).not.toContain('APK');
 
-        const contents = textContents(LicenseView.build(data, NOW).components);
+        const expired = viewData({ vehicleInfo: vehicleInfo({ vervaldatum_apk_dt: '2025-01-19T00:00:00.000' }) });
+        expect(textContents(LicenseView.build(expired, NOW).components)).toContain('⚠️ APK verlopen');
 
-        expect(contents).toContain('## X-897-PL');
-    });
-
-    it('warns when the apk has expired', () => {
-        const data = viewData({ vehicleInfo: vehicleInfo({ vervaldatum_apk_dt: '2025-01-19T00:00:00.000' }) });
-
-        const contents = textContents(LicenseView.build(data, NOW).components);
-
-        expect(contents).toContain('⚠️ APK verlopen');
+        const expiring = viewData({ vehicleInfo: vehicleInfo({ vervaldatum_apk_dt: '2026-08-01T00:00:00.000' }) });
+        expect(textContents(LicenseView.build(expiring, NOW).components)).toContain('⚠️ APK verloopt');
     });
 
     it('shows status flags only when applicable', () => {
@@ -190,20 +218,52 @@ describe('LicenseView.build', () => {
         expect(textContents(LicenseView.build(data, NOW).components)).toContain('📦 Geïmporteerd');
     });
 
-    it('renders badge, comment, sightings and spot count', () => {
+    it('summarises the sightings instead of listing a row each', () => {
+        const data = viewData({ sightings: sightingsSummary() });
+
+        const contents = textContents(LicenseView.build(data, NOW).components);
+
+        expect(contents).toContain('**8× gespot** — laatst');
+        expect(contents).toContain('<@user-1> 6× · <@user-2> 2×');
+    });
+
+    it('links the last sighting when it can be jumped to', () => {
         const data = viewData({
-            badge: 'Je bent de eerste!',
-            comment: 'mooie kar',
-            sightingsList: '<@user-1> - 2 maanden geleden',
-            spotCount: 3,
+            sightings: sightingsSummary({ lastSightingUrl: 'https://discordapp.com/channels/1/2/3' }),
         });
+
+        expect(textContents(LicenseView.build(data, NOW).components)).toContain(
+            '](https://discordapp.com/channels/1/2/3)'
+        );
+    });
+
+    it('counts the spotters it does not name', () => {
+        const data = viewData({
+            sightings: sightingsSummary({
+                spotters: [
+                    { discordUserId: 'user-1', count: 4 },
+                    { discordUserId: 'user-2', count: 3 },
+                    { discordUserId: 'user-3', count: 2 },
+                    { discordUserId: 'user-4', count: 1 },
+                    { discordUserId: 'user-5', count: 1 },
+                ],
+            }),
+        });
+
+        const contents = textContents(LicenseView.build(data, NOW).components);
+
+        expect(contents).toContain('<@user-3> 2×');
+        expect(contents).not.toContain('<@user-4>');
+        expect(contents).toContain('en 2 anderen');
+    });
+
+    it('renders badge and comment', () => {
+        const data = viewData({ badge: 'Je bent de eerste!', comment: 'mooie kar' });
 
         const contents = textContents(LicenseView.build(data, NOW).components);
 
         expect(contents).toContain('🥇 Je bent de eerste!');
         expect(contents).toContain('💬 _mooie kar_');
-        expect(contents).toContain('**Eerder gespot door**');
-        expect(contents).toContain('-# 3× gespot in deze server');
     });
 
     it('uses an accent colour based on the primary fuel type', () => {
@@ -221,30 +281,44 @@ describe('LicenseView.build', () => {
 });
 
 describe('LicenseView.buildNotFound', () => {
-    it('renders the not-found message with the sightings list', () => {
-        const contents = textContents(LicenseView.buildNotFound('X897PL', 'X-897-PL', '<@user-1> - gisteren'));
+    it('renders the not-found message with the sightings summary', () => {
+        const contents = textContents(LicenseView.buildNotFound('X897PL', 'X-897-PL', sightingsSummary()));
 
         expect(contents).toContain('niet gevonden');
-        expect(contents).toContain('**Eerder gespot door**');
+        expect(contents).toContain('**8× gespot**');
         expect(contents).toContain('-# X-897-PL');
     });
 });
 
 describe('LicenseView.buildNorwegian', () => {
+    function norwegianData(brand: string) {
+        return {
+            license: 'AB12345',
+            brand,
+            model: 'XC90',
+            fuelDescription: '⚡ 408PK',
+            registeredTimestamp: NOW,
+            logo: { image: LOGO },
+        };
+    }
+
     it('renders the norwegian vehicle with flag footer', () => {
-        const contents = textContents(
-            LicenseView.buildNorwegian({
-                license: 'AB12345',
-                brand: 'VOLVO',
-                model: 'XC90',
-                fuelDescription: '⚡ 408PK',
-                registeredTimestamp: NOW,
-                logo: { url: 'https://www.kentekencheck.nl/assets/img/brands/volvo.png', attachment: null },
-            }).components
-        );
+        const contents = textContents(LicenseView.buildNorwegian(norwegianData('VOLVO')).components);
 
         expect(contents).toContain('## Volvo Xc90');
         expect(contents).toContain('⚡ 408PK');
         expect(contents).toContain('-# 🇳🇴 AB12345');
+    });
+
+    it('attaches the logo and points the thumbnail at it', () => {
+        const { components, files } = LicenseView.buildNorwegian(norwegianData('VOLVO'));
+
+        expect(files).toHaveLength(1);
+        expect(files[0].name).toBe('merk.png');
+        expect(JSON.stringify(components[0].toJSON())).toContain('attachment://merk.png');
+    });
+
+    it('skips the logo when the brand is unknown', () => {
+        expect(LicenseView.buildNorwegian(norwegianData('')).files).toHaveLength(0);
     });
 });

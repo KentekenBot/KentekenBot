@@ -72,14 +72,14 @@ export class License extends BaseCommand implements ICommand {
         const [vehicleInfo, fuelInfo, sightings, previousSpotCount] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
-            Sightings.list(license, this.interaction.guildId, this.interaction.user.id),
+            Sightings.summary(license, this.interaction.guildId, this.interaction.user.id),
             Sightings.countForLicense(license, this.interaction.guildId),
         ]);
 
         if (!vehicleInfo) {
             if (sightings) {
                 await this.interaction.followUp({
-                    components: LicenseView.buildNotFound(license, LicenseUtil.format(license), sightings.list),
+                    components: LicenseView.buildNotFound(license, LicenseUtil.format(license), sightings),
                     flags: MessageFlags.IsComponentsV2,
                     allowedMentions: { users: [] },
                 });
@@ -104,7 +104,7 @@ export class License extends BaseCommand implements ICommand {
             vehicleType: LicenseUtil.getVehicleType(license),
             badge: isFirstModel ? FirstSpotBadge.message(vehicleInfo.merk, vehicleInfo.handelsbenaming) : null,
             comment: this.getComment(),
-            sightingsList: sightings ? sightings.list : null,
+            sightings,
             spotCount: previousSpotCount !== null ? previousSpotCount + 1 : null,
             logo: await BrandLogo.resolve(vehicleInfo.merk),
         });

@@ -2,6 +2,7 @@ import { AttachmentBuilder, ContainerBuilder } from 'discord.js';
 import { VehicleInfo } from '../models/vehicle-info';
 import { FuelInfo } from '../models/fuel-info';
 import { BrandLogoResult } from './brand-logo.types';
+import { SightingsSummary } from './sighting.types';
 
 export interface LicenseViewMessage {
     components: ContainerBuilder[];
@@ -15,7 +16,7 @@ export interface LicenseViewData {
     vehicleType: string | null;
     badge: string | null;
     comment: string | null;
-    sightingsList: string | null;
+    sightings: SightingsSummary | null;
     spotCount: number | null;
     logo: BrandLogoResult;
 }

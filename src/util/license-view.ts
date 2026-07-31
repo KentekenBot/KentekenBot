@@ -16,9 +16,12 @@ import { LicenseViewData, LicenseViewMessage, NorwegianViewData } from '../types
 import { BrandLogoResult } from '../types/brand-logo.types';
 import { BrandLogo } from './brand-logo';
 import { VehicleInfo } from '../models/vehicle-info';
-import { DutchPlate } from './dutch-plate';
+import { HeroCard } from './hero-card';
+import { HeroCardFact } from '../types/hero-card.types';
+import { SightingsSummary } from '../types/sighting.types';
 import { Str } from './str';
 import { DateTime } from './date-time';
+import { formatCurrency } from './format-currency';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 
 export class LicenseView {
@@ -27,17 +30,22 @@ export class LicenseView {
     private static readonly ACCENT_DIESEL = 0x4e5058;
     private static readonly APK_WARNING_WINDOW_MS = 1000 * 60 * 60 * 24 * 60;
     private static readonly IMPORT_THRESHOLD_MS = 1000 * 60 * 60 * 24 * 180;
+    private static readonly SPOTTERS_SHOWN = 3;
 
     public static build(data: LicenseViewData, now = Date.now()): LicenseViewMessage {
         const container = new ContainerBuilder().setAccentColor(this.accentColor(data));
 
-        const specs = this.buildSpecs(data, now);
-        this.addHeader(container, data, specs);
-        this.addPlate(container);
+        const fileName = this.buildFileName(data);
+        this.addHero(container, fileName);
 
-        const flags = this.buildFlags(data.vehicleInfo);
+        const specs = this.buildSpecs(data);
+        if (specs) {
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(specs));
+        }
+
+        const flags = this.buildFlags(data.vehicleInfo, now);
         if (flags.length > 0) {
-            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(flags.join('\n')));
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# ${flags.join(' · ')}`));
         }
 
         const notes: string[] = [];
@@ -52,57 +60,104 @@ export class LicenseView {
             container.addTextDisplayComponents(new TextDisplayBuilder().setContent(notes.join('\n')));
         }
 
-        if (data.sightingsList) {
+        const sightings = this.buildSightings(data.sightings);
+        if (sightings) {
             container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
-            container.addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(`**Eerder gespot door**\n${data.sightingsList}`)
-            );
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(sightings));
         }
 
         container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(this.buildFooter(data)));
+        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(this.buildCaption(data)));
 
         container.addActionRowComponents(this.buildLinks(data.vehicleInfo.kenteken));
 
-        const files = [this.buildPlateAttachment(data.formattedLicense)];
+        const hero = HeroCard.render({
+            brand: this.brandName(data),
+            model: this.modelName(data),
+            formattedLicense: data.formattedLicense,
+            logo: data.logo.image,
+            facts: this.buildFacts(data, now),
+        });
 
-        const logoAttachment = this.buildLogoAttachment(data.logo);
-        if (logoAttachment) {
-            files.push(logoAttachment);
-        }
-
-        return { components: [container], files };
+        return { components: [container], files: [new AttachmentBuilder(hero, { name: fileName })] };
     }
 
-    private static buildLogoAttachment(logo: BrandLogoResult): AttachmentBuilder | null {
-        if (!logo.attachment) {
-            return null;
-        }
-
-        return new AttachmentBuilder(logo.attachment, { name: BrandLogo.FALLBACK_FILE_NAME });
-    }
-
-    private static addPlate(container: ContainerBuilder): void {
+    // No description on the item: mobile clients render it as a caption strip over
+    // the image, which repeats what the caption line already says.
+    private static addHero(container: ContainerBuilder, fileName: string): void {
         container.addMediaGalleryComponents(
-            new MediaGalleryBuilder().addItems(
-                new MediaGalleryItemBuilder().setURL(`attachment://${DutchPlate.FILE_NAME}`)
-            )
+            new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(`attachment://${fileName}`))
         );
     }
 
-    private static buildPlateAttachment(formattedLicense: string): AttachmentBuilder {
-        return new AttachmentBuilder(DutchPlate.render(formattedLicense), { name: DutchPlate.FILE_NAME });
+    // Discord can find a message by the name of its attachment, which covers the
+    // unhyphenated spelling of the plate that the caption does not.
+    private static buildFileName(data: LicenseViewData): string {
+        const parts = [this.brandName(data), this.modelName(data), data.vehicleInfo.kenteken];
+
+        const slug: string[] = [];
+        for (const part of parts) {
+            const cleaned = part
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '');
+
+            if (cleaned) {
+                slug.push(cleaned);
+            }
+        }
+
+        return `${slug.join('-') || 'kenteken'}.${HeroCard.FILE_NAME_EXTENSION}`;
     }
 
-    public static buildNotFound(license: string, formattedLicense: string, sightingsList: string): ContainerBuilder[] {
+    // The brand, model and plate are set in the image, where Discord's search cannot
+    // read them, so they ride along in the caption that was already there.
+    private static buildCaption(data: LicenseViewData): string {
+        const parts: string[] = [];
+
+        const name = [this.brandName(data), this.modelName(data)].join(' ').trim();
+        if (name) {
+            parts.push(name);
+        }
+
+        parts.push(data.formattedLicense);
+
+        if (data.spotCount && data.spotCount > 0) {
+            parts.push(`${data.spotCount}× gespot in deze server`);
+        }
+
+        return `-# ${parts.join(' · ')}`;
+    }
+
+    private static brandName(data: LicenseViewData): string {
+        return data.vehicleInfo.merk ? Str.toTitleCase(data.vehicleInfo.merk) : '';
+    }
+
+    private static modelName(data: LicenseViewData): string {
+        const model = data.vehicleInfo.handelsbenaming.trim();
+
+        return model ? Str.toTitleCase(model) : '';
+    }
+
+    private static buildLogoAttachment(logo: BrandLogoResult): AttachmentBuilder {
+        return new AttachmentBuilder(logo.image, { name: BrandLogo.FILE_NAME });
+    }
+
+    public static buildNotFound(
+        license: string,
+        formattedLicense: string,
+        sightings: SightingsSummary
+    ): ContainerBuilder[] {
         const container = new ContainerBuilder().setAccentColor(this.ACCENT_DEFAULT);
 
         container.addTextDisplayComponents(
             new TextDisplayBuilder().setContent(`## Kenteken ${license} niet gevonden, rdw heeft m niet meer (rip)`)
         );
-        container.addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(`**Eerder gespot door**\n${sightingsList}`)
-        );
+
+        const summary = this.buildSightings(sightings);
+        if (summary) {
+            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(summary));
+        }
 
         if (formattedLicense) {
             container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
@@ -128,7 +183,7 @@ export class LicenseView {
             container.addSectionComponents(
                 new SectionBuilder()
                     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${title}\n\`${data.license}\``))
-                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(data.logo.url))
+                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(`attachment://${BrandLogo.FILE_NAME}`))
             );
         } else {
             container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`${title}\n\`${data.license}\``));
@@ -149,95 +204,107 @@ export class LicenseView {
         container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
         container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# 🇳🇴 ${data.license}`));
 
-        const files: AttachmentBuilder[] = [];
-
-        const logoAttachment = this.buildLogoAttachment(data.logo);
-        if (logoAttachment) {
-            files.push(logoAttachment);
-        }
+        const files = data.brand ? [this.buildLogoAttachment(data.logo)] : [];
 
         return { components: [container], files };
     }
 
-    private static addHeader(container: ContainerBuilder, data: LicenseViewData, specs: string | null): void {
+    // Power, construction year and apk expiry are set in the hero card, so the text
+    // carries what the image does not: the colour, the fuel and the price. No emoji
+    // and no timestamp pills, which is what made the old block look pasted together.
+    private static buildSpecs(data: LicenseViewData): string | null {
         const vehicleInfo = data.vehicleInfo;
+        const parts: string[] = [];
 
-        const nameParts: string[] = [];
-        if (vehicleInfo.merk) {
-            nameParts.push(Str.toTitleCase(vehicleInfo.merk));
-        }
-        if (vehicleInfo.handelsbenaming.trim()) {
-            nameParts.push(Str.toTitleCase(vehicleInfo.handelsbenaming.trim()));
-        }
-
-        const title = `## ${nameParts.length > 0 ? nameParts.join(' ') : data.formattedLicense}`;
-
-        const headerParts = [title];
-        if (data.vehicleType) {
-            headerParts.push(`-# ${data.vehicleType}`);
-        }
-        const header = headerParts.join('\n');
-
-        if (vehicleInfo.merk) {
-            const section = new SectionBuilder()
-                .addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
-                .setThumbnailAccessory(new ThumbnailBuilder().setURL(data.logo.url));
-
-            if (specs) {
-                section.addTextDisplayComponents(new TextDisplayBuilder().setContent(specs));
-            }
-
-            container.addSectionComponents(section);
-            return;
-        }
-
-        container.addTextDisplayComponents(new TextDisplayBuilder().setContent(header));
-
-        if (specs) {
-            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(specs));
-        }
-    }
-
-    private static buildSpecs(data: LicenseViewData, now: number): string | null {
-        const vehicleInfo = data.vehicleInfo;
-
-        const firstLine: string[] = [];
+        const fuels: string[] = [];
         for (const engine of data.fuelInfo.engines) {
-            if (engine.getHorsePower()) {
-                firstLine.push(engine.getHorsePowerDescription());
+            const fuel = engine.brandstof_omschrijving;
+            if (fuel && !fuels.includes(fuel)) {
+                fuels.push(fuel);
             }
         }
+        if (fuels.length > 0) {
+            parts.push(`**${fuels.join(' + ')}**`);
+        }
+
         if (vehicleInfo.eerste_kleur) {
-            firstLine.push(`🎨 ${Str.toTitleCase(vehicleInfo.eerste_kleur)}`);
-        }
-        if (vehicleInfo.getPrice()) {
-            firstLine.push(vehicleInfo.getPriceDescription());
+            parts.push(Str.toTitleCase(vehicleInfo.eerste_kleur));
         }
 
-        const secondLine: string[] = [];
-        const constructionTimestamp = vehicleInfo.getConstructionDateTimestamp();
-        if (!isNaN(constructionTimestamp)) {
-            const constructionDate = DateTime.getDiscordTimestamp(constructionTimestamp, DiscordTimestamps.SHORT_DATE);
-            secondLine.push(`🗓️ ${constructionDate}`);
+        if (data.vehicleType) {
+            parts.push(data.vehicleType);
         }
 
-        const apk = this.apkDescription(vehicleInfo, now);
-        if (apk) {
-            secondLine.push(apk);
+        const price = vehicleInfo.getPrice();
+        if (price) {
+            parts.push(formatCurrency(price));
         }
 
-        const lines: string[] = [];
-        if (firstLine.length > 0) {
-            lines.push(firstLine.join(' · '));
-        }
-        if (secondLine.length > 0) {
-            lines.push(secondLine.join(' · '));
-        }
-
-        return lines.length > 0 ? lines.join('\n') : null;
+        return parts.length > 0 ? parts.join(' · ') : null;
     }
 
-    private static apkDescription(vehicleInfo: VehicleInfo, now: number): string | null {
+    // The headline numbers, drawn into the card beside the plate.
+    private static buildFacts(data: LicenseViewData, now: number): HeroCardFact[] {
+        const facts: HeroCardFact[] = [];
+
+        const power: string[] = [];
+        for (const engine of data.fuelInfo.engines) {
+            const horsePower = engine.getHorsePower();
+            if (horsePower) {
+                power.push(`${horsePower} pk`);
+            }
+        }
+        if (power.length > 0) {
+            facts.push({ label: 'Vermogen', value: power.join(' + ') });
+        }
+
+        const constructionTimestamp = data.vehicleInfo.getConstructionDateTimestamp();
+        if (!isNaN(constructionTimestamp)) {
+            facts.push({ label: 'Bouwjaar', value: String(data.vehicleInfo.getConstructionYear()) });
+        }
+
+        const expiry = data.vehicleInfo.getApkExpiryTimestamp();
+        if (expiry) {
+            facts.push({ label: expiry < now ? 'APK verlopen' : 'APK tot', value: DateTime.toMonthAndYear(expiry) });
+        }
+
+        return facts;
+    }
+
+    private static buildSightings(sightings: SightingsSummary | null): string | null {
+        if (!sightings) {
+            return null;
+        }
+
+        const last = DateTime.getDiscordTimestamp(sightings.lastSightingAt, DiscordTimestamps.RELATIVE);
+        const lastLink = sightings.lastSightingUrl ? `[${last}](${sightings.lastSightingUrl})` : last;
+
+        const lines = [`**${sightings.total}× gespot** — laatst ${lastLink}`];
+
+        const spotters: string[] = [];
+        for (const spotter of sightings.spotters.slice(0, this.SPOTTERS_SHOWN)) {
+            spotters.push(`<@${spotter.discordUserId}> ${spotter.count}×`);
+        }
+
+        const remaining = sightings.spotters.length - this.SPOTTERS_SHOWN;
+        if (remaining > 0) {
+            spotters.push(`en ${remaining} ${remaining === 1 ? 'ander' : 'anderen'}`);
+        }
+
+        if (spotters.length > 0) {
+            lines.push(`-# ${spotters.join(' · ')}`);
+        }
+
+        if (sightings.lastComment) {
+            lines.push(`-# 💬 _${sightings.lastComment}_`);
+        }
+
+        return lines.join('\n');
+    }
+
+    // The card states the apk date plainly. Text only speaks up when the date is
+    // something to worry about, which is the one place an emoji still earns its keep.
+    private static apkWarning(vehicleInfo: VehicleInfo, now: number): string | null {
         const expiry = vehicleInfo.getApkExpiryTimestamp();
         if (!expiry) {
             return null;
@@ -251,11 +318,16 @@ export class LicenseView {
             return `⚠️ APK verloopt ${DateTime.getDiscordTimestamp(expiry, DiscordTimestamps.RELATIVE)}`;
         }
 
-        return `🔧 APK tot ${DateTime.getDiscordTimestamp(expiry, DiscordTimestamps.SHORT_DATE)}`;
+        return null;
     }
 
-    private static buildFlags(vehicleInfo: VehicleInfo): string[] {
+    private static buildFlags(vehicleInfo: VehicleInfo, now: number): string[] {
         const flags: string[] = [];
+
+        const apk = this.apkWarning(vehicleInfo, now);
+        if (apk) {
+            flags.push(apk);
+        }
 
         if (vehicleInfo.openstaande_terugroepactie_indicator === 'Ja') {
             flags.push('⚠️ Openstaande terugroepactie');
@@ -307,14 +379,6 @@ export class LicenseView {
         }
 
         return this.ACCENT_DEFAULT;
-    }
-
-    private static buildFooter(data: LicenseViewData): string {
-        if (data.spotCount && data.spotCount > 0) {
-            return `-# ${data.spotCount}× gespot in deze server`;
-        }
-
-        return `-# ${data.formattedLicense}`;
     }
 
     private static buildLinks(license: string): ActionRowBuilder<ButtonBuilder> {
