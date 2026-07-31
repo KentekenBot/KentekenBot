@@ -21,8 +21,6 @@ export class Bot {
     public async liftOff(): Promise<void> {
         await Promise.all([this.login(), await CommandCollection.getInstance().register()]);
 
-        this.startHeartbeat();
-
         this.client.on('clientReady', () => {
             Output.line(`Logged in as ${this.client.user?.tag}`);
             this.client.user?.setActivity(`/k <kenteken>`);
@@ -37,6 +35,10 @@ export class Bot {
                 Output.error(`Interaction ${interaction.id} failed`, error);
             });
         });
+
+        // Started last: a broken heartbeat endpoint must never cost the bot its
+        // interaction listeners.
+        this.startHeartbeat();
     }
 
     private startHeartbeat(): void {
