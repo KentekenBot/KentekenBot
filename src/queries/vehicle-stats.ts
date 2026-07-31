@@ -5,9 +5,8 @@ import { StatsCalculator } from '../util/stats-calculator';
 import { StatsProfile, StatSpot } from '../types/stats.types';
 
 export class VehicleStats {
-    // Scoped to the guild the profile is asked in, like every other board. A guild
-    // member can ask for anyone's stats, and without the scope that answer would
-    // include spots made in other servers and in dms.
+    // A null guild id means the global profile: every spot the user made, in
+    // whatever server or dm.
     public static async forUser(discordUserId: string, discordGuildId: string | null): Promise<StatsProfile> {
         const where: WhereOptions = { discordUserId };
 
