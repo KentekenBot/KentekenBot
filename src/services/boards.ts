@@ -12,7 +12,7 @@ export class Boards {
     public static async render(view: BoardView, discordGuildId: string, user: User): Promise<ContainerBuilder[]> {
         const containers = await this.buildContainers(view, discordGuildId, user);
 
-        return BoardsView.attachTabs(containers, view);
+        return BoardsView.attachTabs(containers, view, user);
     }
 
     private static async buildContainers(

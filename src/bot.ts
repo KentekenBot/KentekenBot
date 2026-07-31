@@ -136,14 +136,21 @@ export class Bot {
             return;
         }
 
-        const view = customId.split(':')[1];
+        const [, view, contextUserId] = customId.split(':');
         if (!isBoardView(view)) {
             return;
         }
 
         await interaction.deferUpdate();
 
-        const components = await Boards.render(view, interaction.guildId, interaction.user);
+        // Older messages carry no user id in the button; only then does the
+        // presser become the subject of the boards.
+        const user =
+            contextUserId && contextUserId !== interaction.user.id
+                ? await this.client.users.fetch(contextUserId)
+                : interaction.user;
+
+        const components = await Boards.render(view, interaction.guildId, user);
 
         await interaction.editReply({
             components,

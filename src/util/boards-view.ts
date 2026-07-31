@@ -6,6 +6,7 @@ import {
     SeparatorBuilder,
     SeparatorSpacingSize,
     TextDisplayBuilder,
+    User,
 } from 'discord.js';
 import { BoardView } from '../types/boards.types';
 import { MostSpottedVehicle } from '../types/leaderboard.types';
@@ -23,16 +24,19 @@ export class BoardsView {
         { view: 'stats', label: 'Mijn stats', emoji: '📊' },
     ];
 
-    public static buildTabs(active: BoardView): ActionRowBuilder<ButtonBuilder> {
+    // The user id rides along in the custom id so a button press keeps showing the
+    // boards of whoever ran the command, not of the person who pressed the button.
+    public static buildTabs(active: BoardView, user: User): ActionRowBuilder<ButtonBuilder> {
         const row = new ActionRowBuilder<ButtonBuilder>();
 
         for (const tab of this.TABS) {
             const isActive = tab.view === active;
+            const label = tab.view === 'stats' ? `Stats van ${user.displayName}` : tab.label;
 
             row.addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`${this.BUTTON_PREFIX}:${tab.view}`)
-                    .setLabel(tab.label)
+                    .setCustomId(`${this.BUTTON_PREFIX}:${tab.view}:${user.id}`)
+                    .setLabel(label)
                     .setEmoji(tab.emoji)
                     .setStyle(isActive ? ButtonStyle.Primary : ButtonStyle.Secondary)
                     .setDisabled(isActive)
@@ -42,12 +46,12 @@ export class BoardsView {
         return row;
     }
 
-    public static attachTabs(containers: ContainerBuilder[], active: BoardView): ContainerBuilder[] {
+    public static attachTabs(containers: ContainerBuilder[], active: BoardView, user: User): ContainerBuilder[] {
         const container = containers[containers.length - 1];
 
         if (container) {
             container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
-            container.addActionRowComponents(this.buildTabs(active));
+            container.addActionRowComponents(this.buildTabs(active, user));
         }
 
         return containers;
