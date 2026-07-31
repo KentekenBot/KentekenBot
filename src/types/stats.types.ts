@@ -1,5 +1,7 @@
 import { NamedVehicle } from './spot.types';
 
+export type StatsScope = 'global' | 'server';
+
 export interface StatVehicle {
     brand: string | null;
     tradeName: string | null;

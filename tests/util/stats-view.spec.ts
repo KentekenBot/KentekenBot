@@ -41,6 +41,20 @@ describe('StatsView.build', () => {
         expect(contents.join('\n')).toContain('Nog geen spots');
     });
 
+    it('renders a server scope subtitle when scope is server', () => {
+        const contents = textContents(StatsView.build(emptyProfile, 'Patrick', 'server'));
+
+        expect(contents[0]).toBe("## 📊 Patrick's stats\n-# Alleen spots in deze server");
+        expect(contents.join('\n')).toContain('Nog geen spots in deze server');
+    });
+
+    it('renders no scope subtitle for the default global scope', () => {
+        const contents = textContents(StatsView.build(emptyProfile, 'Patrick'));
+
+        expect(contents[0]).toBe("## 📊 Patrick's stats");
+        expect(contents.join('\n')).not.toContain('deze server');
+    });
+
     it('renders counts, highlights and the first-spot footer', () => {
         const profile: StatsProfile = {
             totalSpots: 4,
