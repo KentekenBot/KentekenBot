@@ -185,3 +185,7 @@ Temporary Items
 settings.json
 *.db
 *.bak
+
+# JetBrains HTTP client scratch
+http-client.env.json
+http-client.private.env.json
