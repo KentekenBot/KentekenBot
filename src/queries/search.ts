@@ -28,14 +28,20 @@ export class Search {
             sightingWhere.discordUserId = filters.spotterId;
         }
 
+        // Only join on the vehicle when something is actually filtered on it. The
+        // association joins on vehicleId, so an inner join drops every sighting whose
+        // vehicle is unknown, and `/search spotter:@someone` would report fewer spots
+        // for them than /userspots does.
+        const filtersOnVehicle = Boolean(filters.brand || filters.color || filters.fuel);
+
         const { count, rows } = await Sighting.findAndCountAll({
             where: sightingWhere,
             include: [
                 {
                     model: Vehicle,
                     as: 'vehicle',
-                    required: true,
-                    where: vehicleWhere,
+                    required: filtersOnVehicle,
+                    where: filtersOnVehicle ? vehicleWhere : undefined,
                 },
             ],
             order: [['createdAt', 'DESC']],

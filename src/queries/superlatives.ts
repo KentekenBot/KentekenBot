@@ -17,6 +17,11 @@ export class Superlatives {
     }
 
     private static async loadGuildSpots(discordGuildId: string): Promise<SuperlativeSpot[]> {
+        // The inner join is deliberate here: these boards rank on price and build
+        // date, so a sighting without a vehicle row has nothing to rank on and is
+        // skipped below anyway. Legacy sightings used to be missing from the boards
+        // because their vehicleId was never filled in, which the backfill migration
+        // fixes at the source.
         const sightings = await Sighting.findAll({
             where: { discordGuildId },
             include: [
