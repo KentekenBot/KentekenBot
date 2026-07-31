@@ -122,10 +122,6 @@ export class LicenseView {
 
         parts.push(data.formattedLicense);
 
-        if (data.spotCount && data.spotCount > 0) {
-            parts.push(`${data.spotCount}× gespot in deze server`);
-        }
-
         return `-# ${parts.join(' · ')}`;
     }
 
@@ -276,23 +272,18 @@ export class LicenseView {
             return null;
         }
 
-        const last = DateTime.getDiscordTimestamp(sightings.lastSightingAt, DiscordTimestamps.RELATIVE);
-        const lastLink = sightings.lastSightingUrl ? `[${last}](${sightings.lastSightingUrl})` : last;
+        const lines = [`**${sightings.total}× gespot**`];
 
-        const lines = [`**${sightings.total}× gespot** — laatst ${lastLink}`];
-
-        const spotters: string[] = [];
         for (const spotter of sightings.spotters.slice(0, this.SPOTTERS_SHOWN)) {
-            spotters.push(`<@${spotter.discordUserId}> ${spotter.count}×`);
+            const spotterLast = DateTime.getDiscordTimestamp(spotter.lastSightingAt, DiscordTimestamps.RELATIVE);
+            const spotterLink = spotter.lastSightingUrl ? `[${spotterLast}](${spotter.lastSightingUrl})` : spotterLast;
+
+            lines.push(`- <@${spotter.discordUserId}> ${spotter.count}× — laatst ${spotterLink}`);
         }
 
         const remaining = sightings.spotters.length - this.SPOTTERS_SHOWN;
         if (remaining > 0) {
-            spotters.push(`en ${remaining} ${remaining === 1 ? 'ander' : 'anderen'}`);
-        }
-
-        if (spotters.length > 0) {
-            lines.push(`-# ${spotters.join(' · ')}`);
+            lines.push(`- en ${remaining} ${remaining === 1 ? 'ander' : 'anderen'}`);
         }
 
         if (sightings.lastComment) {

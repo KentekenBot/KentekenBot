@@ -17,7 +17,6 @@ export interface LicenseViewData {
     badge: string | null;
     comment: string | null;
     sightings: SightingsSummary | null;
-    spotCount: number | null;
     logo: BrandLogoResult;
 }
 

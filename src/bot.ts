@@ -21,8 +21,6 @@ export class Bot {
     public async liftOff(): Promise<void> {
         await Promise.all([this.login(), await CommandCollection.getInstance().register()]);
 
-        this.startHeartbeat();
-
         this.client.on('clientReady', () => {
             Output.line(`Logged in as ${this.client.user?.tag}`);
             this.client.user?.setActivity(`/k <kenteken>`);
@@ -37,6 +35,10 @@ export class Bot {
                 Output.error(`Interaction ${interaction.id} failed`, error);
             });
         });
+
+        // Started last: a broken heartbeat endpoint must never cost the bot its
+        // interaction listeners.
+        this.startHeartbeat();
     }
 
     private startHeartbeat(): void {
@@ -134,14 +136,21 @@ export class Bot {
             return;
         }
 
-        const view = customId.split(':')[1];
+        const [, view, contextUserId] = customId.split(':');
         if (!isBoardView(view)) {
             return;
         }
 
         await interaction.deferUpdate();
 
-        const components = await Boards.render(view, interaction.guildId, interaction.user);
+        // Older messages carry no user id in the button; only then does the
+        // presser become the subject of the boards.
+        const user =
+            contextUserId && contextUserId !== interaction.user.id
+                ? await this.client.users.fetch(contextUserId)
+                : interaction.user;
+
+        const components = await Boards.render(view, interaction.guildId, user);
 
         await interaction.editReply({
             components,

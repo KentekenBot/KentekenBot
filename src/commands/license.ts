@@ -74,11 +74,10 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
-        const [vehicleInfo, fuelInfo, sightings, previousSpotCount] = await Promise.all([
+        const [vehicleInfo, fuelInfo, sightings] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
             Sightings.summary(license, this.interaction.guildId, this.interaction.user.id),
-            Sightings.countForLicense(license, this.interaction.guildId),
         ]);
 
         if (!vehicleInfo) {
@@ -106,7 +105,6 @@ export class License extends BaseCommand implements ICommand {
             badge: isFirstModel ? FirstSpotBadge.message(vehicleInfo.merk, vehicleInfo.handelsbenaming) : null,
             comment: this.getComment(),
             sightings,
-            spotCount: previousSpotCount !== null ? previousSpotCount + 1 : null,
             logo: await BrandLogo.resolve(vehicleInfo.merk),
         });
 

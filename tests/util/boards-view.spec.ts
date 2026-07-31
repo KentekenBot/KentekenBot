@@ -1,10 +1,12 @@
-import { ButtonStyle } from 'discord.js';
+import { ButtonStyle, User } from 'discord.js';
 import { BoardsView } from '../../src/util/boards-view';
 import { MostSpottedVehicle } from '../../src/types/leaderboard.types';
 
+const user = { id: 'user-1', displayName: 'Thom' } as User;
+
 describe('BoardsView.buildTabs', () => {
-    it('renders all five tabs with leaderboard custom ids', () => {
-        const row = BoardsView.buildTabs('spotters').toJSON();
+    it('renders all five tabs with the command user in the custom ids', () => {
+        const row = BoardsView.buildTabs('spotters', user).toJSON();
 
         expect(row.components).toHaveLength(5);
 
@@ -14,16 +16,23 @@ describe('BoardsView.buildTabs', () => {
         }
 
         expect(customIds).toEqual([
-            'leaderboard:spotters',
-            'leaderboard:expensive',
-            'leaderboard:oldest',
-            'leaderboard:mostSpotted',
-            'leaderboard:stats',
+            'leaderboard:spotters:user-1',
+            'leaderboard:expensive:user-1',
+            'leaderboard:oldest:user-1',
+            'leaderboard:mostSpotted:user-1',
+            'leaderboard:stats:user-1',
         ]);
     });
 
+    it("labels the stats tab with the command user's display name", () => {
+        const row = BoardsView.buildTabs('spotters', user).toJSON();
+
+        const stats = row.components[4];
+        expect('label' in stats ? stats.label : undefined).toBe('Stats van Thom');
+    });
+
     it('marks the active tab as primary and disabled', () => {
-        const row = BoardsView.buildTabs('oldest').toJSON();
+        const row = BoardsView.buildTabs('oldest', user).toJSON();
 
         const oldest = row.components[2];
         expect(oldest.style).toBe(ButtonStyle.Primary);
@@ -71,7 +80,7 @@ describe('BoardsView.buildMostSpotted', () => {
 
 describe('BoardsView.attachTabs', () => {
     it('appends the tab row to the last container', () => {
-        const containers = BoardsView.attachTabs(BoardsView.buildMostSpotted([]), 'mostSpotted');
+        const containers = BoardsView.attachTabs(BoardsView.buildMostSpotted([]), 'mostSpotted', user);
 
         const components = containers[containers.length - 1].toJSON().components;
         const lastComponent = components[components.length - 1];
