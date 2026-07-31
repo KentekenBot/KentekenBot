@@ -19,6 +19,7 @@ import { Vehicle } from '../models';
 import { FirstSpotter } from '../queries/first-spotter';
 import { FirstSpotBadge } from '../util/first-spot-badge';
 import { LicenseView } from '../util/license-view';
+import { BrandLogo } from '../util/brand-logo';
 
 export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -105,6 +106,7 @@ export class License extends BaseCommand implements ICommand {
             comment: this.getComment(),
             sightingsList: sightings ? sightings.list : null,
             spotCount: previousSpotCount !== null ? previousSpotCount + 1 : null,
+            logo: await BrandLogo.resolve(vehicleInfo.merk),
         });
 
         await this.interaction.followUp({
@@ -142,43 +144,71 @@ export class License extends BaseCommand implements ICommand {
     }
 
     protected async getNorwegianInfo(license: string) {
-        const response = await fetch(
-            `https://kjoretoyoppslag.atlas.vegvesen.no/ws/no/vegvesen/kjoretoy/kjoretoyoppslag/v1/oppslag/raw/${license}`
-        );
+        const data = await this.fetchNorwegianData(license);
 
-        const data: StatensVegvesenFullData = await response.json();
+        if (!data) {
+            await this.interaction.followUp('Ik kon dat Noorse kenteken niet ophalen.');
+            return;
+        }
 
-        const brand = data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.generelt.merke[0]?.merke ?? '';
-        const model = data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.generelt.handelsbetegnelse[0] ?? '';
+        const generelt = data.kjoretoy?.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt;
+        const brand = generelt?.merke?.[0]?.merke ?? '';
+        const model = generelt?.handelsbetegnelse?.[0] ?? '';
 
-        const engines = data.kjoretoy.godkjenning.tekniskGodkjenning.tekniskeData.motorOgDrivverk.motor;
+        const engines = data.kjoretoy?.godkjenning?.tekniskGodkjenning?.tekniskeData?.motorOgDrivverk?.motor ?? [];
 
         const fuelDescription: string[] = [];
-        engines.forEach((engine) => {
-            const fuel = engine.drivstoff[0];
+        for (const engine of engines) {
+            const fuel = engine.drivstoff?.[0];
             if (!fuel?.maksNettoEffekt) {
-                return;
+                continue;
             }
 
-            const emoji = fuel.drivstoffKode.kodeNavn === 'Elektrisk' ? '⚡' : '⛽';
+            const emoji = fuel.drivstoffKode?.kodeNavn === 'Elektrisk' ? '⚡' : '⛽';
             fuelDescription.push(`${emoji} ${calculateHorsePower(fuel.maksNettoEffekt)}PK`);
-        });
+        }
 
-        const registeredTimestamp = new Date(
-            data.kjoretoy.godkjenning.forstegangsGodkjenning.forstegangRegistrertDato
-        ).getTime();
+        const registeredDate = data.kjoretoy?.godkjenning?.forstegangsGodkjenning?.forstegangRegistrertDato;
+        const registeredTimestamp = registeredDate ? new Date(registeredDate).getTime() : NaN;
 
-        const components = LicenseView.buildNorwegian({
+        const { components, files } = LicenseView.buildNorwegian({
             license,
             brand,
             model,
             fuelDescription: fuelDescription.join('  ·  '),
             registeredTimestamp: isNaN(registeredTimestamp) ? 0 : registeredTimestamp,
+            logo: await BrandLogo.resolve(brand),
         });
 
         await this.interaction.followUp({
             components,
+            files,
             flags: MessageFlags.IsComponentsV2,
         });
+    }
+
+    private async fetchNorwegianData(license: string): Promise<StatensVegvesenFullData | null> {
+        const url = `https://kjoretoyoppslag.atlas.vegvesen.no/ws/no/vegvesen/kjoretoy/kjoretoyoppslag/v1/oppslag/raw/${license}`;
+
+        try {
+            const response = await fetch(url);
+
+            // The endpoint answers 410 with an empty body for every plate since it
+            // was retired, so the body has to be checked before it is parsed.
+            if (!response.ok) {
+                return null;
+            }
+
+            const body = await response.text();
+            if (!body.trim()) {
+                return null;
+            }
+
+            const data: StatensVegvesenFullData = JSON.parse(body);
+
+            return data;
+        } catch {
+            return null;
+        }
     }
 }

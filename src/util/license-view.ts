@@ -13,6 +13,8 @@ import {
     ThumbnailBuilder,
 } from 'discord.js';
 import { LicenseViewData, LicenseViewMessage, NorwegianViewData } from '../types/license-view.types';
+import { BrandLogoResult } from '../types/brand-logo.types';
+import { BrandLogo } from './brand-logo';
 import { VehicleInfo } from '../models/vehicle-info';
 import { DutchPlate } from './dutch-plate';
 import { Str } from './str';
@@ -62,10 +64,22 @@ export class LicenseView {
 
         container.addActionRowComponents(this.buildLinks(data.vehicleInfo.kenteken));
 
-        return {
-            components: [container],
-            files: [this.buildPlateAttachment(data.formattedLicense)],
-        };
+        const files = [this.buildPlateAttachment(data.formattedLicense)];
+
+        const logoAttachment = this.buildLogoAttachment(data.logo);
+        if (logoAttachment) {
+            files.push(logoAttachment);
+        }
+
+        return { components: [container], files };
+    }
+
+    private static buildLogoAttachment(logo: BrandLogoResult): AttachmentBuilder | null {
+        if (!logo.attachment) {
+            return null;
+        }
+
+        return new AttachmentBuilder(logo.attachment, { name: BrandLogo.FALLBACK_FILE_NAME });
     }
 
     private static addPlate(container: ContainerBuilder): void {
@@ -98,7 +112,7 @@ export class LicenseView {
         return [container];
     }
 
-    public static buildNorwegian(data: NorwegianViewData): ContainerBuilder[] {
+    public static buildNorwegian(data: NorwegianViewData): LicenseViewMessage {
         const container = new ContainerBuilder().setAccentColor(this.ACCENT_DEFAULT);
 
         const nameParts: string[] = [];
@@ -114,7 +128,7 @@ export class LicenseView {
             container.addSectionComponents(
                 new SectionBuilder()
                     .addTextDisplayComponents(new TextDisplayBuilder().setContent(`${title}\n\`${data.license}\``))
-                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(this.logoUrl(data.brand)))
+                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(data.logo.url))
             );
         } else {
             container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`${title}\n\`${data.license}\``));
@@ -135,7 +149,14 @@ export class LicenseView {
         container.addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small));
         container.addTextDisplayComponents(new TextDisplayBuilder().setContent(`-# 🇳🇴 ${data.license}`));
 
-        return [container];
+        const files: AttachmentBuilder[] = [];
+
+        const logoAttachment = this.buildLogoAttachment(data.logo);
+        if (logoAttachment) {
+            files.push(logoAttachment);
+        }
+
+        return { components: [container], files };
     }
 
     private static addHeader(container: ContainerBuilder, data: LicenseViewData, specs: string | null): void {
@@ -160,7 +181,7 @@ export class LicenseView {
         if (vehicleInfo.merk) {
             const section = new SectionBuilder()
                 .addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
-                .setThumbnailAccessory(new ThumbnailBuilder().setURL(this.logoUrl(vehicleInfo.merk)));
+                .setThumbnailAccessory(new ThumbnailBuilder().setURL(data.logo.url));
 
             if (specs) {
                 section.addTextDisplayComponents(new TextDisplayBuilder().setContent(specs));
@@ -197,7 +218,7 @@ export class LicenseView {
         const constructionTimestamp = vehicleInfo.getConstructionDateTimestamp();
         if (!isNaN(constructionTimestamp)) {
             const constructionDate = DateTime.getDiscordTimestamp(constructionTimestamp, DiscordTimestamps.SHORT_DATE);
-            secondLine.push(`🗓️ ${constructionDate} (${this.age(constructionTimestamp, now)})`);
+            secondLine.push(`🗓️ ${constructionDate}`);
         }
 
         const apk = this.apkDescription(vehicleInfo, now);
@@ -274,21 +295,6 @@ export class LicenseView {
         return firstRegistrationNl - constructionTimestamp > this.IMPORT_THRESHOLD_MS;
     }
 
-    private static age(constructionTimestamp: number, now: number): string {
-        const months = Math.floor((now - constructionTimestamp) / (1000 * 60 * 60 * 24 * 30.44));
-
-        if (months < 1) {
-            return 'nieuw';
-        }
-
-        if (months < 12) {
-            return `${months} ${months === 1 ? 'maand' : 'maanden'}`;
-        }
-
-        const years = Math.floor(months / 12);
-        return `${years} jaar`;
-    }
-
     private static accentColor(data: LicenseViewData): number {
         const fuel = data.fuelInfo.engines[0]?.brandstof_omschrijving?.toLowerCase();
 
@@ -322,9 +328,5 @@ export class LicenseView {
                 .setStyle(ButtonStyle.Link)
                 .setURL(`https://finnik.nl/kenteken/${license}/gratis`)
         );
-    }
-
-    private static logoUrl(brand: string): string {
-        return `https://www.kentekencheck.nl/assets/img/brands/${Str.humanToSnakeCase(brand)}.png`;
     }
 }

@@ -1,16 +1,62 @@
-import { Resvg } from '@resvg/resvg-js';
+import { SvgRenderer } from './svg-renderer';
 
 export class DutchPlate {
     public static readonly FILE_NAME = 'kenteken.png';
 
-    private static readonly FONT_FAMILY = 'DejaVu Sans Condensed';
-    private static readonly FONT_PATH = require.resolve('dejavu-fonts-ttf/ttf/DejaVuSansCondensed-Bold.ttf');
+    private static readonly PLATE_FONT = SvgRenderer.PLATE_FONT_FAMILY;
+    private static readonly STRIP_FONT = SvgRenderer.TEXT_FONT_FAMILY;
 
+    private static readonly SCALE = 0.75;
     private static readonly HEIGHT = 100;
     private static readonly STRIP_WIDTH = 62;
     private static readonly CORNER_RADIUS = 14;
-    private static readonly CHAR_WIDTH = 38;
-    private static readonly SIDE_PADDING = 26;
+    private static readonly SIDE_PADDING = 24;
+    private static readonly FONT_SIZE = 66;
+
+    // Advance widths in em, read from the Kenteken font. The face is proportional
+    // (I is 0.384em, M is 0.884em), so the plate is measured rather than assuming
+    // a fixed character width.
+    private static readonly CAP_HEIGHT_EM = 0.875;
+    private static readonly DEFAULT_ADVANCE_EM = 0.77;
+    private static readonly ADVANCE_EM: Record<string, number> = {
+        A: 0.858,
+        B: 0.744,
+        C: 0.709,
+        D: 0.77,
+        E: 0.7,
+        F: 0.674,
+        G: 0.753,
+        H: 0.769,
+        I: 0.384,
+        J: 0.613,
+        K: 0.76,
+        L: 0.682,
+        M: 0.884,
+        N: 0.769,
+        O: 0.77,
+        P: 0.735,
+        Q: 0.787,
+        R: 0.759,
+        S: 0.744,
+        T: 0.7,
+        U: 0.769,
+        V: 0.763,
+        W: 0.752,
+        X: 0.757,
+        Y: 0.732,
+        Z: 0.716,
+        '0': 0.77,
+        '1': 0.454,
+        '2': 0.709,
+        '3': 0.674,
+        '4': 0.753,
+        '5': 0.753,
+        '6': 0.753,
+        '7': 0.691,
+        '8': 0.745,
+        '9': 0.753,
+        '-': 0.385,
+    };
 
     private static readonly PLATE_YELLOW = '#F2C500';
     private static readonly STRIP_BLUE = '#0B3B8C';
@@ -18,23 +64,14 @@ export class DutchPlate {
     private static readonly TEXT_DARK = '#111111';
 
     public static render(formattedLicense: string): Buffer {
-        const svg = this.buildSvg(formattedLicense);
-
-        const resvg = new Resvg(svg, {
-            font: {
-                loadSystemFonts: false,
-                fontFiles: [this.FONT_PATH],
-                defaultFontFamily: this.FONT_FAMILY,
-            },
-        });
-
-        return resvg.render().asPng();
+        return SvgRenderer.toPng(this.buildSvg(formattedLicense), this.SCALE);
     }
 
     private static buildSvg(formattedLicense: string): string {
-        const textWidth = formattedLicense.length * this.CHAR_WIDTH;
-        const width = this.STRIP_WIDTH + this.SIDE_PADDING * 2 + textWidth;
+        const textWidth = this.textWidth(formattedLicense);
+        const width = Math.round(this.STRIP_WIDTH + this.SIDE_PADDING * 2 + textWidth);
         const textCenter = this.STRIP_WIDTH + (width - this.STRIP_WIDTH) / 2;
+        const baseline = (this.HEIGHT + this.CAP_HEIGHT_EM * this.FONT_SIZE) / 2;
 
         return [
             `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${this.HEIGHT}" viewBox="0 0 ${width} ${this.HEIGHT}">`,
@@ -42,15 +79,23 @@ export class DutchPlate {
             this.buildStrip(),
             this.buildStars(),
             `<text x="${this.STRIP_WIDTH / 2}" y="76" font-family="${
-                this.FONT_FAMILY
+                this.STRIP_FONT
             }" font-size="26" font-weight="bold" text-anchor="middle" fill="#FFFFFF">NL</text>`,
-            `<text x="${textCenter}" y="74" font-family="${
-                this.FONT_FAMILY
-            }" font-size="58" font-weight="bold" letter-spacing="3" text-anchor="middle" fill="${
-                this.TEXT_DARK
-            }">${this.escape(formattedLicense)}</text>`,
+            `<text x="${textCenter}" y="${baseline}" font-family="${this.PLATE_FONT}" font-size="${
+                this.FONT_SIZE
+            }" text-anchor="middle" fill="${this.TEXT_DARK}">${SvgRenderer.escape(formattedLicense)}</text>`,
             '</svg>',
         ].join('');
+    }
+
+    private static textWidth(formattedLicense: string): number {
+        let em = 0;
+
+        for (const character of formattedLicense.toUpperCase()) {
+            em += this.ADVANCE_EM[character] ?? this.DEFAULT_ADVANCE_EM;
+        }
+
+        return em * this.FONT_SIZE;
     }
 
     private static buildStrip(): string {
@@ -86,14 +131,5 @@ export class DutchPlate {
         }
 
         return `<g fill="${this.STAR_YELLOW}">${stars.join('')}</g>`;
-    }
-
-    private static escape(value: string): string {
-        return value
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;');
     }
 }

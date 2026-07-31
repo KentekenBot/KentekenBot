@@ -66,6 +66,7 @@ function viewData(overrides: Partial<LicenseViewData> = {}): LicenseViewData {
         comment: null,
         sightingsList: null,
         spotCount: null,
+        logo: { url: 'https://www.kentekencheck.nl/assets/img/brands/opel.png', attachment: null },
         ...overrides,
     };
 }
@@ -91,14 +92,21 @@ describe('LicenseView.build', () => {
         expect(JSON.stringify(gallery)).toContain('attachment://kenteken.png');
     });
 
-    it('renders specs with power, colour, price, age and apk', () => {
+    it('renders specs with power, colour, price, date and apk', () => {
         const contents = textContents(LicenseView.build(viewData(), NOW).components);
 
         expect(contents).toContain('⛽ 101PK');
         expect(contents).toContain('🎨 Grijs');
         expect(contents).toContain('💵');
-        expect(contents).toContain('(2 jaar)');
+        expect(contents).toContain('🗓️');
         expect(contents).toContain('🔧 APK tot');
+    });
+
+    it('does not show the age next to the construction date', () => {
+        const contents = textContents(LicenseView.build(viewData(), NOW).components);
+
+        expect(contents).not.toMatch(/\(\d+ (jaar|maand|maanden)\)/);
+        expect(contents).not.toContain('(nieuw)');
     });
 
     it('skips missing fields instead of showing placeholders', () => {
@@ -231,7 +239,8 @@ describe('LicenseView.buildNorwegian', () => {
                 model: 'XC90',
                 fuelDescription: '⚡ 408PK',
                 registeredTimestamp: NOW,
-            })
+                logo: { url: 'https://www.kentekencheck.nl/assets/img/brands/volvo.png', attachment: null },
+            }).components
         );
 
         expect(contents).toContain('## Volvo Xc90');
