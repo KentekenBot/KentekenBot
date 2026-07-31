@@ -160,6 +160,8 @@ export class Sightings {
         return `https://discordapp.com/channels/${sighting.discordGuildId}/${sighting.discordChannelId}/${sighting.discordInteractionId}`;
     }
 
+    // Returns the stored row: the first-spotter check has to be able to leave this
+    // sighting out of its own comparison.
     public static insert(
         license: string,
         author: User,
@@ -168,8 +170,8 @@ export class Sightings {
         discordGuildId: string | null,
         comment: null | string = null,
         vehicleId: number | null
-    ): void {
-        Sighting.create({
+    ): Promise<Sighting> {
+        return Sighting.create({
             license,
             discordUserId: author.id,
             discordGuildId: discordGuildId ?? undefined,

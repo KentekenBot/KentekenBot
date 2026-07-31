@@ -15,11 +15,16 @@ import { FuelInfo } from '../models/fuel-info';
 import { calculateHorsePower } from '../util/calulate-horse-power';
 import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen.types';
 import { Vehicles } from '../queries/vehicles';
-import { Vehicle } from '../models';
 import { FirstSpotter } from '../queries/first-spotter';
 import { FirstSpotBadge } from '../util/first-spot-badge';
 import { LicenseView } from '../util/license-view';
 import { BrandLogo } from '../util/brand-logo';
+import { Output } from '../services/output';
+
+interface RecordedSpot {
+    vehicleId: number | null;
+    sightingId: number | null;
+}
 
 export class License extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -89,13 +94,9 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
-        const vehicle = await this.insertVehicle(vehicleInfo, fuelInfo, 'nl');
+        const recorded = await this.recordSpot(license, vehicleInfo, fuelInfo);
 
-        const isFirstModel = await FirstSpotter.isFirstModelInGuild(
-            this.interaction.guildId,
-            vehicleInfo.merk,
-            vehicleInfo.handelsbenaming
-        );
+        const isFirstModel = await this.isFirstModel(vehicleInfo, recorded.sightingId);
 
         const { components, files } = LicenseView.build({
             vehicleInfo,
@@ -116,27 +117,49 @@ export class License extends BaseCommand implements ICommand {
             allowedMentions: { users: [] },
         });
 
-        this.insertSighting(license, vehicle.id);
-
-        if (sightings?.needsUpdate) {
-            Sightings.updateVehicleIdForLicense(license, vehicle.id);
+        if (recorded.vehicleId !== null && sightings?.needsUpdate) {
+            Sightings.updateVehicleIdForLicense(license, recorded.vehicleId);
         }
     }
 
-    private async insertSighting(license: string, vehicleId: number): Promise<void> {
-        await Sightings.insert(
-            license,
-            this.interaction.user,
-            this.interaction.id,
-            this.interaction.channelId,
-            this.interaction.guildId,
-            this.getComment(),
-            vehicleId
-        );
+    // The spot is stored before the reply is built, so the badge check can exclude
+    // it and two people spotting the same new model at once cannot both be told they
+    // were first. A database error must not cost the user their reply, though: on
+    // master the write happened afterwards, so a failure still left the card posted.
+    private async recordSpot(license: string, vehicleInfo: VehicleInfo, fuelInfo: FuelInfo): Promise<RecordedSpot> {
+        try {
+            const vehicle = await Vehicles.insert(vehicleInfo, fuelInfo, 'nl');
+            const sighting = await Sightings.insert(
+                license,
+                this.interaction.user,
+                this.interaction.id,
+                this.interaction.channelId,
+                this.interaction.guildId,
+                this.getComment(),
+                vehicle.id
+            );
+
+            return { vehicleId: vehicle.id, sightingId: sighting.id };
+        } catch (error) {
+            Output.error(`Could not record the spot for ${license}`, error);
+
+            return { vehicleId: null, sightingId: null };
+        }
     }
 
-    private async insertVehicle(vehicle: VehicleInfo, fuelInfo: FuelInfo, country: string): Promise<Vehicle> {
-        return Vehicles.insert(vehicle, fuelInfo, country);
+    // Without a stored sighting there is nothing to compare against, so the badge is
+    // skipped rather than guessed at.
+    private async isFirstModel(vehicleInfo: VehicleInfo, sightingId: number | null): Promise<boolean> {
+        if (sightingId === null) {
+            return false;
+        }
+
+        return FirstSpotter.isFirstModelInGuild(
+            this.interaction.guildId,
+            vehicleInfo.merk,
+            vehicleInfo.handelsbenaming,
+            sightingId
+        );
     }
 
     private getComment(): string | null {
