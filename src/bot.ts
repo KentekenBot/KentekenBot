@@ -4,8 +4,14 @@ import { AvailableSettings } from './enums/available-settings';
 import { Output } from './services/output';
 import { Heartbeat } from './services/heartbeat';
 import { CommandCollection } from './services/command-collection';
-import { Sightings } from './services/sightings';
+import { Sightings } from './queries/sightings';
 import { SightingsView } from './util/sightings-view';
+import { Search } from './queries/search';
+import { SearchModal } from './util/search-modal';
+import { SearchView } from './util/search-view';
+import { Boards } from './services/boards';
+import { BoardsView } from './util/boards-view';
+import { isBoardView } from './types/boards.types';
 
 export class Bot {
     private client = new Client({
@@ -22,8 +28,14 @@ export class Bot {
             this.client.user?.setActivity(`/k <kenteken>`);
         });
 
-        this.client.on('interactionCreate', async (interaction) => {
-            this.handleInteraction(interaction);
+        // Every interaction is awaited and caught here. Discord expires an
+        // interaction token after a few seconds and supersedes an autocomplete on
+        // every keystroke, so answering a dead interaction is a routine event rather
+        // than an exception. Left unhandled, that rejection takes the process down.
+        this.client.on('interactionCreate', (interaction) => {
+            this.handleInteraction(interaction).catch(function (error: unknown) {
+                Output.error(`Interaction ${interaction.id} failed`, error);
+            });
         });
     }
 
@@ -41,19 +53,45 @@ export class Bot {
         return this.client.login(Settings.get(AvailableSettings.TOKEN));
     }
 
-    private handleInteraction(interaction: Interaction): void {
+    private async handleInteraction(interaction: Interaction): Promise<void> {
         if (interaction.isChatInputCommand()) {
-            this.handleCommand(interaction);
+            await this.handleCommand(interaction);
             return;
         }
 
         if (interaction.isButton()) {
-            this.handleButton(interaction);
+            await this.handleButton(interaction);
+            return;
+        }
+
+        if (interaction.isAutocomplete()) {
+            await this.handleAutocomplete(interaction);
+            return;
+        }
+
+        if (interaction.isModalSubmit()) {
+            await this.handleModal(interaction);
             return;
         }
     }
 
-    private handleCommand(interaction: Interaction): void {
+    private async handleAutocomplete(interaction: Interaction): Promise<void> {
+        if (!interaction.isAutocomplete()) {
+            return;
+        }
+
+        const handlerClass = CommandCollection.getInstance().getCommandHandler(interaction.commandName);
+        if (!handlerClass) {
+            return;
+        }
+
+        const handler = new handlerClass();
+        if (handler.autocomplete) {
+            await handler.autocomplete(interaction);
+        }
+    }
+
+    private async handleCommand(interaction: Interaction): Promise<void> {
         if (!interaction.isChatInputCommand()) {
             return;
         }
@@ -62,11 +100,11 @@ export class Bot {
 
         const handlerClass = commands.getCommandHandler(interaction.commandName);
         if (!handlerClass) {
-            interaction.reply('Oepsie woepsie, er is iets fout gegaan!');
+            await interaction.reply('Oepsie woepsie, er is iets fout gegaan!');
             return;
         }
 
-        new handlerClass().init(interaction, this.client).handle();
+        await new handlerClass().init(interaction, this.client).handle();
     }
 
     private async handleButton(interaction: Interaction): Promise<void> {
@@ -78,7 +116,68 @@ export class Bot {
 
         if (customId.startsWith('userspots:') || customId.startsWith('serverspots:')) {
             await this.handleSpotsPageChange(interaction, customId);
+            return;
         }
+
+        if (customId.startsWith(SearchModal.BUTTON_PREFIX)) {
+            await interaction.showModal(SearchModal.build(SearchModal.parseButtonId(customId)));
+            return;
+        }
+
+        if (customId.startsWith(`${BoardsView.BUTTON_PREFIX}:`)) {
+            await this.handleBoardChange(interaction, customId);
+        }
+    }
+
+    private async handleBoardChange(interaction: Interaction, customId: string): Promise<void> {
+        if (!interaction.isButton() || !interaction.guildId) {
+            return;
+        }
+
+        const view = customId.split(':')[1];
+        if (!isBoardView(view)) {
+            return;
+        }
+
+        await interaction.deferUpdate();
+
+        const components = await Boards.render(view, interaction.guildId, interaction.user);
+
+        await interaction.editReply({
+            components,
+            flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
+        });
+    }
+
+    private async handleModal(interaction: Interaction): Promise<void> {
+        if (!interaction.isModalSubmit() || !interaction.customId.startsWith(SearchModal.MODAL_ID)) {
+            return;
+        }
+
+        if (!interaction.isFromMessage()) {
+            return;
+        }
+
+        await interaction.deferUpdate();
+
+        const filters = SearchModal.fromSubmit(interaction);
+
+        if (!Search.hasFilters(filters) || !interaction.guildId) {
+            await interaction.editReply({
+                components: SearchView.buildPrompt(filters),
+                flags: MessageFlags.IsComponentsV2,
+            });
+            return;
+        }
+
+        const result = await Search.inGuild(interaction.guildId, filters);
+
+        await interaction.editReply({
+            components: SearchView.build(result, filters),
+            flags: MessageFlags.IsComponentsV2,
+            allowedMentions: { users: [] },
+        });
     }
 
     private async handleSpotsPageChange(interaction: Interaction, customId: string): Promise<void> {

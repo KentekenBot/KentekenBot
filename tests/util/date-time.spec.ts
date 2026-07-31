@@ -13,4 +13,9 @@ describe('Date time helper class', () => {
         expect(DateTime.getDiscordTimestamp(100000, DiscordTimestamps.LONG_DATE_TIME)).toBe('<t:100:F>');
         expect(DateTime.getDiscordTimestamp(100000, DiscordTimestamps.RELATIVE)).toBe('<t:100:R>');
     });
+
+    it('should format a month and year for text drawn into an image', () => {
+        expect(DateTime.toMonthAndYear(new Date(2028, 0, 19).getTime())).toBe('jan 2028');
+        expect(DateTime.toMonthAndYear(new Date(2020, 11, 5).getTime())).toBe('dec 2020');
+    });
 });

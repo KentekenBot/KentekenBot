@@ -1,0 +1,79 @@
+import { Op, WhereOptions } from 'sequelize';
+import { Sighting } from '../models/sighting';
+import { Vehicle } from '../models/vehicle';
+import { SearchFilters, SearchResult, SearchSighting } from '../types/search.types';
+
+export class Search {
+    private static readonly LIMIT = 10;
+
+    public static hasFilters(filters: SearchFilters): boolean {
+        return Boolean(filters.brand || filters.color || filters.fuel || filters.spotterId);
+    }
+
+    public static async inGuild(discordGuildId: string, filters: SearchFilters): Promise<SearchResult> {
+        const vehicleWhere: WhereOptions = {};
+
+        if (filters.brand) {
+            vehicleWhere.brand = { [Op.like]: `%${filters.brand}%` };
+        }
+        if (filters.color) {
+            vehicleWhere.color = { [Op.like]: `%${filters.color}%` };
+        }
+        if (filters.fuel) {
+            vehicleWhere.primaryFuelType = { [Op.like]: `%${filters.fuel}%` };
+        }
+
+        const sightingWhere: WhereOptions = { discordGuildId };
+        if (filters.spotterId) {
+            sightingWhere.discordUserId = filters.spotterId;
+        }
+
+        // Only join on the vehicle when something is actually filtered on it. The
+        // association joins on vehicleId, so an inner join drops every sighting whose
+        // vehicle is unknown, and `/search spotter:@someone` would report fewer spots
+        // for them than /userspots does.
+        const filtersOnVehicle = Boolean(filters.brand || filters.color || filters.fuel);
+
+        const { count, rows } = await Sighting.findAndCountAll({
+            where: sightingWhere,
+            include: [
+                {
+                    model: Vehicle,
+                    as: 'vehicle',
+                    required: filtersOnVehicle,
+                    where: filtersOnVehicle ? vehicleWhere : undefined,
+                },
+            ],
+            order: [['createdAt', 'DESC']],
+            limit: this.LIMIT,
+        });
+
+        const sightings: SearchSighting[] = [];
+        for (const row of rows) {
+            const vehicle = row.vehicle;
+            sightings.push({
+                license: row.license,
+                createdAt: row.createdAt,
+                discordUserId: row.discordUserId,
+                discordGuildId: row.discordGuildId,
+                discordChannelId: row.discordChannelId,
+                discordInteractionId: row.discordInteractionId,
+                vehicle: vehicle
+                    ? {
+                          brand: vehicle.brand,
+                          tradeName: vehicle.tradeName,
+                          color: vehicle.color,
+                          totalHorsepower: vehicle.totalHorsepower,
+                          primaryFuelType: vehicle.primaryFuelType,
+                      }
+                    : null,
+            });
+        }
+
+        return {
+            sightings,
+            totalCount: count,
+            shown: sightings.length,
+        };
+    }
+}
