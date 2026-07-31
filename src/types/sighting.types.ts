@@ -22,13 +22,13 @@ export interface PaginatedResult {
 export interface SightingsSpotter {
     discordUserId: string;
     count: number;
+    lastSightingAt: number;
+    lastSightingUrl: string | null;
 }
 
 export interface SightingsSummary {
     total: number;
     spotters: SightingsSpotter[];
-    lastSightingAt: number;
-    lastSightingUrl: string | null;
     lastComment: string | null;
     needsUpdate: boolean;
 }

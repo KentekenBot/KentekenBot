@@ -1,7 +1,7 @@
 import { ComponentType, ContainerBuilder } from 'discord.js';
 import { LicenseView } from '../../src/util/license-view';
 import { LicenseViewData } from '../../src/types/license-view.types';
-import { SightingsSummary } from '../../src/types/sighting.types';
+import { SightingsSpotter, SightingsSummary } from '../../src/types/sighting.types';
 import { VehicleInfo } from '../../src/models/vehicle-info';
 import { FuelInfo } from '../../src/models/fuel-info';
 import { EngineInfo } from '../../src/models/engine-info';
@@ -71,15 +71,20 @@ function fuelInfo(engines: Record<string, unknown>[]): FuelInfo {
     return info;
 }
 
+function spotter(discordUserId: string, count: number, overrides: Partial<SightingsSpotter> = {}): SightingsSpotter {
+    return {
+        discordUserId,
+        count,
+        lastSightingAt: NOW - 1000 * 60 * 4,
+        lastSightingUrl: null,
+        ...overrides,
+    };
+}
+
 function sightingsSummary(overrides: Partial<SightingsSummary> = {}): SightingsSummary {
     return {
         total: 8,
-        spotters: [
-            { discordUserId: 'user-1', count: 6 },
-            { discordUserId: 'user-2', count: 2 },
-        ],
-        lastSightingAt: NOW - 1000 * 60 * 4,
-        lastSightingUrl: null,
+        spotters: [spotter('user-1', 6), spotter('user-2', 2)],
         lastComment: null,
         needsUpdate: false,
         ...overrides,
@@ -95,7 +100,6 @@ function viewData(overrides: Partial<LicenseViewData> = {}): LicenseViewData {
         badge: null,
         comment: null,
         sightings: null,
-        spotCount: null,
         logo: { image: LOGO },
         ...overrides,
     };
@@ -112,9 +116,9 @@ describe('LicenseView.build', () => {
     // The brand, model and plate are drawn into the image, so they have to stay in
     // message text somewhere for Discord's search to reach them.
     it('keeps the brand, model and plate searchable in the caption', () => {
-        const contents = textContents(LicenseView.build(viewData({ spotCount: 3 }), NOW).components);
+        const contents = textContents(LicenseView.build(viewData(), NOW).components);
 
-        expect(contents).toContain('-# Opel Corsa · X-897-PL · 3× gespot in deze server');
+        expect(contents).toContain('-# Opel Corsa · X-897-PL');
     });
 
     it('names the attachment after the car so it can be found by filename', () => {
@@ -218,34 +222,35 @@ describe('LicenseView.build', () => {
         expect(textContents(LicenseView.build(data, NOW).components)).toContain('📦 Geïmporteerd');
     });
 
-    it('summarises the sightings instead of listing a row each', () => {
-        const data = viewData({ sightings: sightingsSummary() });
+    it('lists each spotter with their count and last spot', () => {
+        const data = viewData({
+            sightings: sightingsSummary({
+                spotters: [
+                    spotter('user-1', 6, { lastSightingUrl: 'https://discordapp.com/channels/1/2/3' }),
+                    spotter('user-2', 2),
+                ],
+            }),
+        });
 
         const contents = textContents(LicenseView.build(data, NOW).components);
 
-        expect(contents).toContain('**8× gespot** — laatst');
-        expect(contents).toContain('<@user-1> 6× · <@user-2> 2×');
-    });
-
-    it('links the last sighting when it can be jumped to', () => {
-        const data = viewData({
-            sightings: sightingsSummary({ lastSightingUrl: 'https://discordapp.com/channels/1/2/3' }),
-        });
-
-        expect(textContents(LicenseView.build(data, NOW).components)).toContain(
-            '](https://discordapp.com/channels/1/2/3)'
+        expect(contents).toContain('**8× gespot**');
+        expect(contents).not.toContain('**8× gespot** — laatst');
+        expect(contents).toMatch(
+            /- <@user-1> 6× — laatst \[<t:\d+:R>\]\(https:\/\/discordapp\.com\/channels\/1\/2\/3\)/
         );
+        expect(contents).toMatch(/- <@user-2> 2× — laatst <t:\d+:R>/);
     });
 
     it('counts the spotters it does not name', () => {
         const data = viewData({
             sightings: sightingsSummary({
                 spotters: [
-                    { discordUserId: 'user-1', count: 4 },
-                    { discordUserId: 'user-2', count: 3 },
-                    { discordUserId: 'user-3', count: 2 },
-                    { discordUserId: 'user-4', count: 1 },
-                    { discordUserId: 'user-5', count: 1 },
+                    spotter('user-1', 4),
+                    spotter('user-2', 3),
+                    spotter('user-3', 2),
+                    spotter('user-4', 1),
+                    spotter('user-5', 1),
                 ],
             }),
         });
@@ -254,7 +259,7 @@ describe('LicenseView.build', () => {
 
         expect(contents).toContain('<@user-3> 2×');
         expect(contents).not.toContain('<@user-4>');
-        expect(contents).toContain('en 2 anderen');
+        expect(contents).toContain('- en 2 anderen');
     });
 
     it('renders badge and comment', () => {

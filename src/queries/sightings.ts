@@ -93,14 +93,6 @@ export class Sightings {
         return { brand, tradeName, color, totalHorsepower, primaryFuelType, country };
     }
 
-    public static async countForLicense(license: string, discordGuildId: string | null): Promise<number | null> {
-        if (!discordGuildId) {
-            return null;
-        }
-
-        return Sighting.count({ where: { license, discordGuildId } });
-    }
-
     // A summary instead of a row per sighting: a car spotted forty times produced
     // forty near-identical lines, which pushed the rest of the reply off screen. The
     // rows are read in full because the counts are per spotter.
@@ -120,21 +112,30 @@ export class Sightings {
             return null;
         }
 
-        const counts = new Map<string, number>();
+        // The rows come in newest first, so the first row seen for a spotter is
+        // their most recent sighting.
+        const bySpotter = new Map<string, SightingsSpotter>();
         let needsUpdate = false;
 
         for (const row of rows) {
-            counts.set(row.discordUserId, (counts.get(row.discordUserId) ?? 0) + 1);
+            const spotter = bySpotter.get(row.discordUserId);
+            if (spotter) {
+                spotter.count += 1;
+            } else {
+                bySpotter.set(row.discordUserId, {
+                    discordUserId: row.discordUserId,
+                    count: 1,
+                    lastSightingAt: row.createdAt.getTime(),
+                    lastSightingUrl: this.sightingUrl(row),
+                });
+            }
 
             if (row.vehicleId === null) {
                 needsUpdate = true;
             }
         }
 
-        const spotters: SightingsSpotter[] = [];
-        for (const [spotterId, count] of counts) {
-            spotters.push({ discordUserId: spotterId, count });
-        }
+        const spotters = [...bySpotter.values()];
 
         spotters.sort(function (first: SightingsSpotter, second: SightingsSpotter): number {
             return second.count - first.count;
@@ -145,8 +146,6 @@ export class Sightings {
         return {
             total: rows.length,
             spotters,
-            lastSightingAt: newest.createdAt.getTime(),
-            lastSightingUrl: this.sightingUrl(newest),
             lastComment: newest.comment ? Str.limitCharacters(newest.comment, 100) : null,
             needsUpdate,
         };
