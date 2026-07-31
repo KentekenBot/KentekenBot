@@ -17,7 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
-    "axios": "^1.15.0",
+    "axios": "^1.18.0",
     "dejavu-fonts-ttf": "^2.37.3",
     "discord.js": "^14.26.3",
     "moment": "^2.30.1",
