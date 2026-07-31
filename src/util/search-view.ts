@@ -7,7 +7,7 @@ import {
     SeparatorSpacingSize,
     TextDisplayBuilder,
 } from 'discord.js';
-import { SearchFilters, SearchResult, SearchSighting } from '../types/search';
+import { SearchFilters, SearchResult, SearchSighting } from '../types/search.types';
 import { Str } from './str';
 import { License } from './license';
 import { DateTime } from './date-time';
@@ -21,7 +21,7 @@ export class SearchView {
         container.addTextDisplayComponents(new TextDisplayBuilder().setContent('## 🔎 Spots zoeken'));
         container.addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
-                'Geef minstens één filter op: `merk`, `kleur` of `brandstof`.\nOf klik op **Verfijnen** om te zoeken.'
+                'Geef minstens één filter op: `merk`, `kleur`, `brandstof` of `spotter`.\nOf klik op **Verfijnen** om te zoeken.'
             )
         );
 
@@ -67,6 +67,9 @@ export class SearchView {
         }
         if (filters.fuel) {
             parts.push(`brandstof "${filters.fuel}"`);
+        }
+        if (filters.spotterId) {
+            parts.push(`spotter <@${filters.spotterId}>`);
         }
 
         return parts.join(', ');

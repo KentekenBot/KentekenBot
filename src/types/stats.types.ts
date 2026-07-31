@@ -1,19 +1,17 @@
+import { NamedVehicle } from './spot.types';
+
+export interface StatVehicle {
+    brand: string | null;
+    tradeName: string | null;
+    price: number | null;
+    primaryFuelType: string | null;
+    dateFirstAllowed: Date | null;
+}
+
 export interface StatSpot {
     license: string;
     createdAt: Date;
-    vehicle: {
-        brand: string | null;
-        tradeName: string | null;
-        price: number | null;
-        primaryFuelType: string | null;
-        dateFirstAllowed: Date | null;
-    } | null;
-}
-
-export interface NamedVehicle {
-    brand: string | null;
-    tradeName: string | null;
-    license: string;
+    vehicle: StatVehicle | null;
 }
 
 export interface StatsProfile {

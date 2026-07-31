@@ -1,7 +1,7 @@
 import { col, fn } from 'sequelize';
 import { Sighting } from '../models/sighting';
 import { Vehicle } from '../models/vehicle';
-import { LeaderboardResult, MostSpottedVehicle, SpotterRank, TopVehicle } from '../types/leaderboard';
+import { LeaderboardResult, MostSpottedVehicle, SpotterRank, TopVehicle } from '../types/leaderboard.types';
 
 export class Leaderboard {
     private static readonly TOP_SPOTTERS = 10;

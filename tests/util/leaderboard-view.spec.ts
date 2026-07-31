@@ -1,5 +1,5 @@
 import { LeaderboardView } from '../../src/util/leaderboard-view';
-import { LeaderboardResult } from '../../src/types/leaderboard';
+import { LeaderboardResult } from '../../src/types/leaderboard.types';
 
 function textContents(containers: ReturnType<typeof LeaderboardView.build>): string {
     const contents: string[] = [];

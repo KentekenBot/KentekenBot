@@ -1,7 +1,7 @@
 import { Sighting } from '../models/sighting';
 import { Vehicle } from '../models/vehicle';
 import { SuperlativesRanker } from '../util/superlatives-ranker';
-import { RankedVehicle, SuperlativeSpot } from '../types/superlatives';
+import { RankedVehicle, SuperlativeSpot } from '../types/superlatives.types';
 
 export class Superlatives {
     private static readonly LIMIT = 10;

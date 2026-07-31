@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ModalBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from 'discord.js';
-import { SearchFilters } from '../types/search';
+import { SearchFilters } from '../types/search.types';
 
 export class SearchModal {
     public static readonly MODAL_ID = 'search:modal';
@@ -8,7 +8,7 @@ export class SearchModal {
     private static readonly MAX_CUSTOM_ID_LENGTH = 100;
 
     public static build(filters: SearchFilters): ModalBuilder {
-        const modal = new ModalBuilder().setCustomId(this.MODAL_ID).setTitle('Spots zoeken');
+        const modal = new ModalBuilder().setCustomId(this.modalId(filters)).setTitle('Spots zoeken');
 
         modal.addComponents(
             new ActionRowBuilder<TextInputBuilder>().addComponents(this.input('merk', 'Merk', filters.brand)),
@@ -25,6 +25,7 @@ export class SearchModal {
             encodeURIComponent(filters.brand ?? ''),
             encodeURIComponent(filters.color ?? ''),
             encodeURIComponent(filters.fuel ?? ''),
+            filters.spotterId ?? '',
         ].join(':');
 
         if (encoded.length > this.MAX_CUSTOM_ID_LENGTH) {
@@ -41,6 +42,7 @@ export class SearchModal {
             brand: this.decodePart(parts[2]),
             color: this.decodePart(parts[3]),
             fuel: this.decodePart(parts[4]),
+            spotterId: parts[5] ? parts[5] : undefined,
         };
     }
 
@@ -49,7 +51,22 @@ export class SearchModal {
             brand: this.normalize(interaction.fields.getTextInputValue('merk')),
             color: this.normalize(interaction.fields.getTextInputValue('kleur')),
             fuel: this.normalize(interaction.fields.getTextInputValue('brandstof')),
+            spotterId: this.parseModalId(interaction.customId),
         };
+    }
+
+    private static modalId(filters: SearchFilters): string {
+        if (!filters.spotterId) {
+            return this.MODAL_ID;
+        }
+
+        return `${this.MODAL_ID}:${filters.spotterId}`;
+    }
+
+    private static parseModalId(customId: string): string | undefined {
+        const spotterId = customId.slice(`${this.MODAL_ID}:`.length);
+
+        return customId.startsWith(`${this.MODAL_ID}:`) && spotterId ? spotterId : undefined;
     }
 
     private static input(id: string, label: string, value?: string): TextInputBuilder {

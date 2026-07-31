@@ -1,15 +1,18 @@
 import {
     ActionRowBuilder,
+    AttachmentBuilder,
     ButtonBuilder,
     ButtonStyle,
     ContainerBuilder,
+    MediaGalleryBuilder,
+    MediaGalleryItemBuilder,
     SectionBuilder,
     SeparatorBuilder,
     SeparatorSpacingSize,
     TextDisplayBuilder,
     ThumbnailBuilder,
 } from 'discord.js';
-import { LicenseViewData, NorwegianViewData } from '../types/license-view';
+import { LicenseViewData, LicenseViewMessage, NorwegianViewData } from '../types/license-view.types';
 import { VehicleInfo } from '../models/vehicle-info';
 import { DutchPlate } from './dutch-plate';
 import { Str } from './str';
@@ -23,11 +26,12 @@ export class LicenseView {
     private static readonly APK_WARNING_WINDOW_MS = 1000 * 60 * 60 * 24 * 60;
     private static readonly IMPORT_THRESHOLD_MS = 1000 * 60 * 60 * 24 * 180;
 
-    public static build(data: LicenseViewData, now = Date.now()): ContainerBuilder[] {
+    public static build(data: LicenseViewData, now = Date.now()): LicenseViewMessage {
         const container = new ContainerBuilder().setAccentColor(this.accentColor(data));
 
         const specs = this.buildSpecs(data, now);
         this.addHeader(container, data, specs);
+        this.addPlate(container);
 
         const flags = this.buildFlags(data.vehicleInfo);
         if (flags.length > 0) {
@@ -58,7 +62,22 @@ export class LicenseView {
 
         container.addActionRowComponents(this.buildLinks(data.vehicleInfo.kenteken));
 
-        return [container];
+        return {
+            components: [container],
+            files: [this.buildPlateAttachment(data.formattedLicense)],
+        };
+    }
+
+    private static addPlate(container: ContainerBuilder): void {
+        container.addMediaGalleryComponents(
+            new MediaGalleryBuilder().addItems(
+                new MediaGalleryItemBuilder().setURL(`attachment://${DutchPlate.FILE_NAME}`)
+            )
+        );
+    }
+
+    private static buildPlateAttachment(formattedLicense: string): AttachmentBuilder {
+        return new AttachmentBuilder(DutchPlate.render(formattedLicense), { name: DutchPlate.FILE_NAME });
     }
 
     public static buildNotFound(license: string, formattedLicense: string, sightingsList: string): ContainerBuilder[] {
@@ -132,7 +151,7 @@ export class LicenseView {
 
         const title = `## ${nameParts.length > 0 ? nameParts.join(' ') : data.formattedLicense}`;
 
-        const headerParts = [title, DutchPlate.render(data.formattedLicense)];
+        const headerParts = [title];
         if (data.vehicleType) {
             headerParts.push(`-# ${data.vehicleType}`);
         }

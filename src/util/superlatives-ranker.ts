@@ -1,4 +1,4 @@
-import { RankedVehicle, SuperlativeSpot } from '../types/superlatives';
+import { RankedVehicle, SuperlativeSpot } from '../types/superlatives.types';
 
 export class SuperlativesRanker {
     public static byPrice(spots: SuperlativeSpot[], limit: number): RankedVehicle[] {

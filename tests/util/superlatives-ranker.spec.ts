@@ -1,5 +1,5 @@
 import { SuperlativesRanker } from '../../src/util/superlatives-ranker';
-import { SuperlativeSpot } from '../../src/types/superlatives';
+import { SuperlativeSpot } from '../../src/types/superlatives.types';
 
 function spot(overrides: Partial<SuperlativeSpot> & { license: string }): SuperlativeSpot {
     return {

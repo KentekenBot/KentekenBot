@@ -3,23 +3,28 @@ import { SearchModal } from '../../src/util/search-modal';
 describe('SearchModal.buttonId', () => {
     it('encodes the filters into the custom id', () => {
         expect(SearchModal.buttonId({ brand: 'Audi', color: 'zwart', fuel: 'diesel' })).toBe(
-            'search:refine:Audi:zwart:diesel'
+            'search:refine:Audi:zwart:diesel:'
         );
     });
 
+    it('encodes the spotter into the custom id', () => {
+        expect(SearchModal.buttonId({ brand: 'Audi', spotterId: '12345' })).toBe('search:refine:Audi:::12345');
+    });
+
     it('leaves missing filters empty', () => {
-        expect(SearchModal.buttonId({ brand: 'Audi' })).toBe('search:refine:Audi::');
-        expect(SearchModal.buttonId({})).toBe('search:refine:::');
+        expect(SearchModal.buttonId({ brand: 'Audi' })).toBe('search:refine:Audi:::');
+        expect(SearchModal.buttonId({})).toBe('search:refine::::');
     });
 
     it('escapes separators and spaces in values', () => {
         const id = SearchModal.buttonId({ brand: 'alfa romeo', color: 'rood:metallic' });
 
-        expect(id).toBe('search:refine:alfa%20romeo:rood%3Ametallic:');
+        expect(id).toBe('search:refine:alfa%20romeo:rood%3Ametallic::');
         expect(SearchModal.parseButtonId(id)).toEqual({
             brand: 'alfa romeo',
             color: 'rood:metallic',
             fuel: undefined,
+            spotterId: undefined,
         });
     });
 
@@ -32,7 +37,13 @@ describe('SearchModal.buttonId', () => {
 
 describe('SearchModal.parseButtonId', () => {
     it('round-trips filters through the custom id', () => {
-        const filters = { brand: 'Audi', color: 'zwart', fuel: 'diesel' };
+        const filters = { brand: 'Audi', color: 'zwart', fuel: 'diesel', spotterId: undefined };
+
+        expect(SearchModal.parseButtonId(SearchModal.buttonId(filters))).toEqual(filters);
+    });
+
+    it('round-trips the spotter through the custom id', () => {
+        const filters = { brand: 'Audi', color: undefined, fuel: undefined, spotterId: '12345' };
 
         expect(SearchModal.parseButtonId(SearchModal.buttonId(filters))).toEqual(filters);
     });
@@ -42,6 +53,7 @@ describe('SearchModal.parseButtonId', () => {
             brand: undefined,
             color: undefined,
             fuel: undefined,
+            spotterId: undefined,
         });
     });
 });
@@ -58,5 +70,11 @@ describe('SearchModal.build', () => {
         expect(inputs[0].value).toBe('Audi');
         expect(inputs[1].value).toBeUndefined();
         expect(inputs.every((input) => input.required === false)).toBe(true);
+    });
+
+    it('carries the spotter through the modal custom id', () => {
+        const modal = SearchModal.build({ spotterId: '12345' }).toJSON();
+
+        expect(modal.custom_id).toBe('search:modal:12345');
     });
 });

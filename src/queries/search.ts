@@ -1,13 +1,13 @@
 import { Op, WhereOptions } from 'sequelize';
 import { Sighting } from '../models/sighting';
 import { Vehicle } from '../models/vehicle';
-import { SearchFilters, SearchResult, SearchSighting } from '../types/search';
+import { SearchFilters, SearchResult, SearchSighting } from '../types/search.types';
 
 export class Search {
     private static readonly LIMIT = 10;
 
     public static hasFilters(filters: SearchFilters): boolean {
-        return Boolean(filters.brand || filters.color || filters.fuel);
+        return Boolean(filters.brand || filters.color || filters.fuel || filters.spotterId);
     }
 
     public static async inGuild(discordGuildId: string, filters: SearchFilters): Promise<SearchResult> {
@@ -23,8 +23,13 @@ export class Search {
             vehicleWhere.primaryFuelType = { [Op.like]: `%${filters.fuel}%` };
         }
 
+        const sightingWhere: WhereOptions = { discordGuildId };
+        if (filters.spotterId) {
+            sightingWhere.discordUserId = filters.spotterId;
+        }
+
         const { count, rows } = await Sighting.findAndCountAll({
-            where: { discordGuildId },
+            where: sightingWhere,
             include: [
                 {
                     model: Vehicle,

@@ -1,6 +1,6 @@
 import { ButtonStyle } from 'discord.js';
 import { BoardsView } from '../../src/util/boards-view';
-import { MostSpottedVehicle } from '../../src/types/leaderboard';
+import { MostSpottedVehicle } from '../../src/types/leaderboard.types';
 
 describe('BoardsView.buildTabs', () => {
     it('renders all five tabs with leaderboard custom ids', () => {

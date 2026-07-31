@@ -4,34 +4,7 @@ import { escapeMarkdown, User } from 'discord.js';
 import { DateTime } from '../util/date-time';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 import { Str } from '../util/str';
-
-export interface PaginatedSighting {
-    id: number;
-    license: string;
-    comment: string | null;
-    createdAt: Date;
-    discordUserId: string;
-    discordGuildId: string;
-    discordChannelId: string;
-    discordInteractionId: string;
-    vehicle: {
-        brand: string | null;
-        tradeName: string | null;
-        color: string | null;
-        totalHorsepower: string | null;
-        primaryFuelType: string | null;
-        country: string;
-    } | null;
-}
-
-export interface PaginatedResult {
-    sightings: PaginatedSighting[];
-    totalCount: number;
-    currentPage: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-}
+import { PaginatedResult, PaginatedSighting, PaginatedVehicle } from '../types/sighting.types';
 
 export class Sightings {
     private static readonly ITEMS_PER_PAGE = 6;
@@ -69,29 +42,10 @@ export class Sightings {
 
         const totalPages = Math.ceil(count / this.ITEMS_PER_PAGE);
 
-        const sightings: PaginatedSighting[] = rows.map((row) => {
-            const vehicle = row.vehicle;
-            return {
-                id: row.id,
-                license: row.license,
-                comment: row.comment,
-                createdAt: row.createdAt,
-                discordUserId: row.discordUserId,
-                discordGuildId: row.discordGuildId,
-                discordChannelId: row.discordChannelId,
-                discordInteractionId: row.discordInteractionId,
-                vehicle: vehicle
-                    ? {
-                          brand: vehicle.brand,
-                          tradeName: vehicle.tradeName,
-                          color: vehicle.color,
-                          totalHorsepower: vehicle.totalHorsepower,
-                          primaryFuelType: vehicle.primaryFuelType,
-                          country: vehicle.country,
-                      }
-                    : null,
-            };
-        });
+        const sightings: PaginatedSighting[] = [];
+        for (const row of rows) {
+            sightings.push(this.toPaginatedSighting(row));
+        }
 
         return {
             sightings,
@@ -101,6 +55,38 @@ export class Sightings {
             hasNextPage: page < totalPages,
             hasPreviousPage: page > 1,
         };
+    }
+
+    private static toPaginatedSighting(sighting: Sighting): PaginatedSighting {
+        const {
+            id,
+            license,
+            comment,
+            createdAt,
+            discordUserId,
+            discordGuildId,
+            discordChannelId,
+            discordInteractionId,
+            vehicle,
+        } = sighting;
+
+        return {
+            id,
+            license,
+            comment,
+            createdAt,
+            discordUserId,
+            discordGuildId,
+            discordChannelId,
+            discordInteractionId,
+            vehicle: vehicle ? this.toPaginatedVehicle(vehicle) : null,
+        };
+    }
+
+    private static toPaginatedVehicle(vehicle: Vehicle): PaginatedVehicle {
+        const { brand, tradeName, color, totalHorsepower, primaryFuelType, country } = vehicle;
+
+        return { brand, tradeName, color, totalHorsepower, primaryFuelType, country };
     }
 
     public static async countForLicense(license: string, discordGuildId: string | null): Promise<number | null> {

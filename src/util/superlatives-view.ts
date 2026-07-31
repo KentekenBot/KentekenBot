@@ -1,5 +1,5 @@
 import { ContainerBuilder, TextDisplayBuilder } from 'discord.js';
-import { RankedVehicle, SuperlativeMode } from '../types/superlatives';
+import { RankedVehicle, SuperlativeMode } from '../types/superlatives.types';
 import { Str } from './str';
 import { License } from './license';
 import { formatCurrency } from './format-currency';

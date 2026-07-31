@@ -1,5 +1,5 @@
 import { StatsView } from '../../src/util/stats-view';
-import { StatsProfile } from '../../src/types/stats';
+import { StatsProfile } from '../../src/types/stats.types';
 import { formatCurrency } from '../../src/util/format-currency';
 
 function textContents(containers: ReturnType<typeof StatsView.build>): string[] {

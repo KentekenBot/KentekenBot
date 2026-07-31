@@ -3,7 +3,7 @@ import { BaseCommand } from './base-command';
 import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType, MessageFlags } from 'discord.js';
 import { Search as SearchQuery } from '../queries/search';
 import { SearchView } from '../util/search-view';
-import { SearchFilters } from '../types/search';
+import { SearchFilters } from '../types/search.types';
 
 export class Search extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -16,7 +16,8 @@ export class Search extends BaseCommand implements ICommand {
             .addStringOption((option) => option.setName('kleur').setDescription('Filter op kleur, bijv. zwart'))
             .addStringOption((option) =>
                 option.setName('brandstof').setDescription('Filter op brandstof, bijv. diesel')
-            );
+            )
+            .addUserOption((option) => option.setName('spotter').setDescription('Filter op wie de spot heeft gedaan'));
 
         return builder;
     }
@@ -26,7 +27,6 @@ export class Search extends BaseCommand implements ICommand {
 
         const guildId = this.interaction.guildId;
         if (!guildId) {
-            await this.interaction.followUp('Dit commando kan alleen in een server worden gebruikt.');
             return;
         }
 
@@ -54,6 +54,7 @@ export class Search extends BaseCommand implements ICommand {
             brand: this.getTrimmedArgument('merk'),
             color: this.getTrimmedArgument('kleur'),
             fuel: this.getTrimmedArgument('brandstof'),
+            spotterId: this.interaction.options.getUser('spotter')?.id,
         };
     }
 

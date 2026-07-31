@@ -1,12 +1,13 @@
+import { ComponentType, ContainerBuilder } from 'discord.js';
 import { LicenseView } from '../../src/util/license-view';
-import { LicenseViewData } from '../../src/types/license-view';
+import { LicenseViewData } from '../../src/types/license-view.types';
 import { VehicleInfo } from '../../src/models/vehicle-info';
 import { FuelInfo } from '../../src/models/fuel-info';
 import { EngineInfo } from '../../src/models/engine-info';
 
 const NOW = new Date('2026-07-10T12:00:00Z').getTime();
 
-function textContents(containers: ReturnType<typeof LicenseView.build>): string {
+function textContents(containers: ContainerBuilder[]): string {
     const contents: string[] = [];
 
     for (const container of containers) {
@@ -70,16 +71,28 @@ function viewData(overrides: Partial<LicenseViewData> = {}): LicenseViewData {
 }
 
 describe('LicenseView.build', () => {
-    it('renders the header with brand, model and the plate as a dutch plate block', () => {
-        const contents = textContents(LicenseView.build(viewData(), NOW));
+    it('renders the header with brand and model', () => {
+        const contents = textContents(LicenseView.build(viewData(), NOW).components);
 
         expect(contents).toContain('## Opel Corsa');
-        expect(contents).toContain('```ansi');
-        expect(contents).toContain(' X-897-PL ');
+    });
+
+    it('attaches the plate as an image and references it from the container', () => {
+        const { components, files } = LicenseView.build(viewData(), NOW);
+
+        expect(files).toHaveLength(1);
+        expect(files[0].name).toBe('kenteken.png');
+
+        const gallery = components[0]
+            .toJSON()
+            .components.find((component) => component.type === ComponentType.MediaGallery);
+
+        expect(gallery).toBeDefined();
+        expect(JSON.stringify(gallery)).toContain('attachment://kenteken.png');
     });
 
     it('renders specs with power, colour, price, age and apk', () => {
-        const contents = textContents(LicenseView.build(viewData(), NOW));
+        const contents = textContents(LicenseView.build(viewData(), NOW).components);
 
         expect(contents).toContain('⛽ 101PK');
         expect(contents).toContain('🎨 Grijs');
@@ -99,7 +112,7 @@ describe('LicenseView.build', () => {
             fuelInfo: fuelInfo([]),
         });
 
-        const contents = textContents(LicenseView.build(data, NOW));
+        const contents = textContents(LicenseView.build(data, NOW).components);
 
         expect(contents).not.toContain('🎨');
         expect(contents).not.toContain('💵');
@@ -117,7 +130,7 @@ describe('LicenseView.build', () => {
             ]),
         });
 
-        const contents = textContents(LicenseView.build(data, NOW));
+        const contents = textContents(LicenseView.build(data, NOW).components);
 
         expect(contents).toContain('⛽ 101PK');
         expect(contents).toContain('⚡ 68PK');
@@ -126,7 +139,7 @@ describe('LicenseView.build', () => {
     it('falls back to the plate as title when brand and model are missing', () => {
         const data = viewData({ vehicleInfo: vehicleInfo({ merk: '', handelsbenaming: '' }) });
 
-        const contents = textContents(LicenseView.build(data, NOW));
+        const contents = textContents(LicenseView.build(data, NOW).components);
 
         expect(contents).toContain('## X-897-PL');
     });
@@ -134,13 +147,13 @@ describe('LicenseView.build', () => {
     it('warns when the apk has expired', () => {
         const data = viewData({ vehicleInfo: vehicleInfo({ vervaldatum_apk_dt: '2025-01-19T00:00:00.000' }) });
 
-        const contents = textContents(LicenseView.build(data, NOW));
+        const contents = textContents(LicenseView.build(data, NOW).components);
 
         expect(contents).toContain('⚠️ APK verlopen');
     });
 
     it('shows status flags only when applicable', () => {
-        const clean = textContents(LicenseView.build(viewData(), NOW));
+        const clean = textContents(LicenseView.build(viewData(), NOW).components);
         expect(clean).not.toContain('terugroepactie');
         expect(clean).not.toContain('WAM');
         expect(clean).not.toContain('tellerstand');
@@ -152,7 +165,7 @@ describe('LicenseView.build', () => {
                 tellerstandoordeel: 'Onlogisch',
             }),
         });
-        const contents = textContents(LicenseView.build(flagged, NOW));
+        const contents = textContents(LicenseView.build(flagged, NOW).components);
 
         expect(contents).toContain('⚠️ Openstaande terugroepactie');
         expect(contents).toContain('🛑 Niet WAM-verzekerd');
@@ -166,7 +179,7 @@ describe('LicenseView.build', () => {
             }),
         });
 
-        expect(textContents(LicenseView.build(data, NOW))).toContain('📦 Geïmporteerd');
+        expect(textContents(LicenseView.build(data, NOW).components)).toContain('📦 Geïmporteerd');
     });
 
     it('renders badge, comment, sightings and spot count', () => {
@@ -177,7 +190,7 @@ describe('LicenseView.build', () => {
             spotCount: 3,
         });
 
-        const contents = textContents(LicenseView.build(data, NOW));
+        const contents = textContents(LicenseView.build(data, NOW).components);
 
         expect(contents).toContain('🥇 Je bent de eerste!');
         expect(contents).toContain('💬 _mooie kar_');
@@ -193,9 +206,9 @@ describe('LicenseView.build', () => {
             fuelInfo: fuelInfo([{ nettomaximumvermogen: '100', brandstof_omschrijving: 'Diesel' }]),
         });
 
-        expect(LicenseView.build(electric, NOW)[0].toJSON().accent_color).toBe(0x57f287);
-        expect(LicenseView.build(diesel, NOW)[0].toJSON().accent_color).toBe(0x4e5058);
-        expect(LicenseView.build(viewData(), NOW)[0].toJSON().accent_color).toBe(0x5865f2);
+        expect(LicenseView.build(electric, NOW).components[0].toJSON().accent_color).toBe(0x57f287);
+        expect(LicenseView.build(diesel, NOW).components[0].toJSON().accent_color).toBe(0x4e5058);
+        expect(LicenseView.build(viewData(), NOW).components[0].toJSON().accent_color).toBe(0x5865f2);
     });
 });
 

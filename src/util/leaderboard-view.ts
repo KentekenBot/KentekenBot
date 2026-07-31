@@ -1,5 +1,5 @@
 import { ContainerBuilder, SeparatorBuilder, SeparatorSpacingSize, TextDisplayBuilder } from 'discord.js';
-import { LeaderboardResult } from '../types/leaderboard';
+import { LeaderboardResult } from '../types/leaderboard.types';
 import { Str } from './str';
 import { License } from './license';
 

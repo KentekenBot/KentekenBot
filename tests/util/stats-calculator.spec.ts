@@ -1,5 +1,5 @@
 import { StatsCalculator } from '../../src/util/stats-calculator';
-import { StatSpot } from '../../src/types/stats';
+import { StatSpot } from '../../src/types/stats.types';
 
 function spot(overrides: Partial<StatSpot> & { license: string }): StatSpot {
     return {

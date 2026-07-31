@@ -11,7 +11,7 @@ import { SearchModal } from './util/search-modal';
 import { SearchView } from './util/search-view';
 import { Boards } from './services/boards';
 import { BoardsView } from './util/boards-view';
-import { isBoardView } from './types/boards';
+import { isBoardView } from './types/boards.types';
 
 export class Bot {
     private client = new Client({
@@ -145,7 +145,7 @@ export class Bot {
     }
 
     private async handleModal(interaction: Interaction): Promise<void> {
-        if (!interaction.isModalSubmit() || interaction.customId !== SearchModal.MODAL_ID) {
+        if (!interaction.isModalSubmit() || !interaction.customId.startsWith(SearchModal.MODAL_ID)) {
             return;
         }
 

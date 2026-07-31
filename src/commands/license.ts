@@ -13,7 +13,7 @@ import { SpotSuggestions } from '../queries/spot-suggestions';
 import { Sightings } from '../queries/sightings';
 import { FuelInfo } from '../models/fuel-info';
 import { calculateHorsePower } from '../util/calulate-horse-power';
-import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen';
+import { StatensVegvesenFullData } from '../types/norwegian-statens-vegvesen.types';
 import { Vehicles } from '../queries/vehicles';
 import { Vehicle } from '../models';
 import { FirstSpotter } from '../queries/first-spotter';
@@ -96,7 +96,7 @@ export class License extends BaseCommand implements ICommand {
             vehicleInfo.handelsbenaming
         );
 
-        const components = LicenseView.build({
+        const { components, files } = LicenseView.build({
             vehicleInfo,
             fuelInfo,
             formattedLicense: LicenseUtil.format(license),
@@ -109,6 +109,7 @@ export class License extends BaseCommand implements ICommand {
 
         await this.interaction.followUp({
             components,
+            files,
             flags: MessageFlags.IsComponentsV2,
             allowedMentions: { users: [] },
         });

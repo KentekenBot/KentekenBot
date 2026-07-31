@@ -2,7 +2,7 @@ import { Op, WhereOptions } from 'sequelize';
 import { Sighting } from '../models/sighting';
 import { Vehicle } from '../models/vehicle';
 import { SpotSuggestion } from '../util/spot-suggestion';
-import { SpotChoice } from '../types/spot-choice';
+import { SpotChoice } from '../types/spot-choice.types';
 
 export class SpotSuggestions {
     private static readonly MAX_CHOICES = 25;

@@ -20,7 +20,6 @@ export class ServerSpots extends BaseCommand implements ICommand {
 
         const guildId = this.interaction.guildId;
         if (!guildId) {
-            await this.interaction.followUp('Dit commando kan alleen in een server worden gebruikt.');
             return;
         }
 

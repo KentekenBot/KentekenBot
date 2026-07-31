@@ -1,5 +1,5 @@
 import { ContainerBuilder, User } from 'discord.js';
-import { BoardView } from '../types/boards';
+import { BoardView } from '../types/boards.types';
 import { Leaderboard } from '../queries/leaderboard';
 import { Superlatives } from '../queries/superlatives';
 import { VehicleStats } from '../queries/vehicle-stats';

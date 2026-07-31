@@ -1,7 +1,7 @@
 import { Sighting } from '../models/sighting';
 import { Vehicle } from '../models/vehicle';
 import { StatsCalculator } from '../util/stats-calculator';
-import { StatsProfile, StatSpot } from '../types/stats';
+import { StatsProfile, StatSpot } from '../types/stats.types';
 
 export class VehicleStats {
     public static async forUser(discordUserId: string): Promise<StatsProfile> {

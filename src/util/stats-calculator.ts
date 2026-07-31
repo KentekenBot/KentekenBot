@@ -1,4 +1,5 @@
-import { NamedVehicle, StatsProfile, StatSpot } from '../types/stats';
+import { StatsProfile, StatSpot } from '../types/stats.types';
+import { NamedVehicle } from '../types/spot.types';
 
 export class StatsCalculator {
     public static compute(spots: StatSpot[]): StatsProfile {

@@ -1,5 +1,5 @@
 import { SearchView } from '../../src/util/search-view';
-import { SearchResult, SearchSighting } from '../../src/types/search';
+import { SearchResult, SearchSighting } from '../../src/types/search.types';
 
 function textContents(containers: ReturnType<typeof SearchView.build>): string {
     const contents: string[] = [];
@@ -94,7 +94,7 @@ describe('SearchView.build', () => {
 
         const customIds = buttonCustomIds(SearchView.build(result, { brand: 'Audi' }));
 
-        expect(customIds).toEqual(['search:refine:Audi::']);
+        expect(customIds).toEqual(['search:refine:Audi:::']);
     });
 });
 
@@ -103,6 +103,6 @@ describe('SearchView.buildPrompt', () => {
         const containers = SearchView.buildPrompt({});
 
         expect(textContents(containers)).toContain('minstens één filter');
-        expect(buttonCustomIds(containers)).toEqual(['search:refine:::']);
+        expect(buttonCustomIds(containers)).toEqual(['search:refine::::']);
     });
 });

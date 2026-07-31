@@ -1,5 +1,11 @@
+import { AttachmentBuilder, ContainerBuilder } from 'discord.js';
 import { VehicleInfo } from '../models/vehicle-info';
 import { FuelInfo } from '../models/fuel-info';
+
+export interface LicenseViewMessage {
+    components: ContainerBuilder[];
+    files: AttachmentBuilder[];
+}
 
 export interface LicenseViewData {
     vehicleInfo: VehicleInfo;

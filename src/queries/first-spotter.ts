@@ -12,7 +12,8 @@ export class FirstSpotter {
             return false;
         }
 
-        const unresolved = await Sighting.count({
+        const unresolved = await Sighting.findOne({
+            attributes: ['id'],
             where: { discordGuildId, vehicleId: null },
         });
 
@@ -34,13 +35,14 @@ export class FirstSpotter {
             return false;
         }
 
-        const count = await Sighting.count({
+        const spotted = await Sighting.findOne({
+            attributes: ['id'],
             where: {
                 discordGuildId,
                 license: { [Op.in]: licenses },
             },
         });
 
-        return count === 0;
+        return spotted === null;
     }
 }

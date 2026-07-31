@@ -1,5 +1,6 @@
 import { ContainerBuilder, SeparatorBuilder, SeparatorSpacingSize, TextDisplayBuilder } from 'discord.js';
-import { NamedVehicle, StatsProfile } from '../types/stats';
+import { StatsProfile } from '../types/stats.types';
+import { NamedVehicle } from '../types/spot.types';
 import { Str } from './str';
 import { formatCurrency } from './format-currency';
 import { DateTime } from './date-time';

@@ -7,8 +7,8 @@ import {
     SeparatorSpacingSize,
     TextDisplayBuilder,
 } from 'discord.js';
-import { BoardView } from '../types/boards';
-import { MostSpottedVehicle } from '../types/leaderboard';
+import { BoardView } from '../types/boards.types';
+import { MostSpottedVehicle } from '../types/leaderboard.types';
 import { Str } from './str';
 import { License } from './license';
 
