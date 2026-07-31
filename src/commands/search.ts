@@ -4,6 +4,8 @@ import { SlashCommandBuilder, InteractionContextType, ApplicationIntegrationType
 import { Search as SearchQuery } from '../queries/search';
 import { SearchView } from '../util/search-view';
 import { SearchFilters } from '../types/search.types';
+import { SearchModal } from '../util/search-modal';
+import { Str } from '../util/str';
 
 export class Search extends BaseCommand implements ICommand {
     public register(builder: SlashCommandBuilder): SlashCommandBuilder {
@@ -12,10 +14,24 @@ export class Search extends BaseCommand implements ICommand {
             .setContexts(InteractionContextType.Guild)
             .setIntegrationTypes(ApplicationIntegrationType.GuildInstall)
             .setDescription('Zoek in de spots van deze server')
-            .addStringOption((option) => option.setName('merk').setDescription('Filter op merk, bijv. Audi'))
-            .addStringOption((option) => option.setName('kleur').setDescription('Filter op kleur, bijv. zwart'))
+            // The lengths match the modal behind the Verfijnen button, which prefills
+            // these values into inputs capped at the same length. Discord rejects a
+            // modal whose value is longer than its input allows, and the button would
+            // fail with nothing but "interactie mislukt" to show for it.
             .addStringOption((option) =>
-                option.setName('brandstof').setDescription('Filter op brandstof, bijv. diesel')
+                option.setName('merk').setDescription('Filter op merk, bijv. Audi').setMaxLength(SearchModal.MAX_LENGTH)
+            )
+            .addStringOption((option) =>
+                option
+                    .setName('kleur')
+                    .setDescription('Filter op kleur, bijv. zwart')
+                    .setMaxLength(SearchModal.MAX_LENGTH)
+            )
+            .addStringOption((option) =>
+                option
+                    .setName('brandstof')
+                    .setDescription('Filter op brandstof, bijv. diesel')
+                    .setMaxLength(SearchModal.MAX_LENGTH)
             )
             .addUserOption((option) => option.setName('spotter').setDescription('Filter op wie de spot heeft gedaan'));
 
@@ -59,7 +75,7 @@ export class Search extends BaseCommand implements ICommand {
     }
 
     private getTrimmedArgument(name: string): string | undefined {
-        const value = this.getArgument<string>(name)?.trim();
+        const value = Str.withoutLikeWildcards(this.getArgument<string>(name) ?? '').trim();
         return value ? value : undefined;
     }
 }

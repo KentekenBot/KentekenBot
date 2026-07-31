@@ -1,9 +1,14 @@
 import { ActionRowBuilder, ModalBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from 'discord.js';
 import { SearchFilters } from '../types/search.types';
+import { Str } from './str';
 
 export class SearchModal {
     public static readonly MODAL_ID = 'search:modal';
     public static readonly BUTTON_PREFIX = 'search:refine';
+
+    // Also the cap on the slash command options, so a filter typed there can always
+    // be prefilled back into this modal.
+    public static readonly MAX_LENGTH = 50;
 
     private static readonly MAX_CUSTOM_ID_LENGTH = 100;
 
@@ -75,7 +80,7 @@ export class SearchModal {
             .setLabel(label)
             .setStyle(TextInputStyle.Short)
             .setRequired(false)
-            .setMaxLength(50);
+            .setMaxLength(this.MAX_LENGTH);
 
         if (value) {
             input.setValue(value);
@@ -93,7 +98,7 @@ export class SearchModal {
     }
 
     private static normalize(value: string): string | undefined {
-        const trimmed = value.trim();
+        const trimmed = Str.withoutLikeWildcards(value).trim();
         return trimmed ? trimmed : undefined;
     }
 }

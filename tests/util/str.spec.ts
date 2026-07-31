@@ -10,4 +10,10 @@ describe('Str helper class', () => {
     it('should capitalize first letter of a word', () => {
         expect(Str.capitalizeFirst('capitalized')).toBe('Capitalized');
     });
+    it('should drop like wildcards so a filter cannot match everything', () => {
+        expect(Str.withoutLikeWildcards('%')).toBe('');
+        expect(Str.withoutLikeWildcards('_')).toBe('');
+        expect(Str.withoutLikeWildcards('a%u_di')).toBe('audi');
+        expect(Str.withoutLikeWildcards('Mercedes-Benz')).toBe('Mercedes-Benz');
+    });
 });
