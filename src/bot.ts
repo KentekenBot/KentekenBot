@@ -28,8 +28,14 @@ export class Bot {
             this.client.user?.setActivity(`/k <kenteken>`);
         });
 
-        this.client.on('interactionCreate', async (interaction) => {
-            this.handleInteraction(interaction);
+        // Every interaction is awaited and caught here. Discord expires an
+        // interaction token after a few seconds and supersedes an autocomplete on
+        // every keystroke, so answering a dead interaction is a routine event rather
+        // than an exception. Left unhandled, that rejection takes the process down.
+        this.client.on('interactionCreate', (interaction) => {
+            this.handleInteraction(interaction).catch(function (error: unknown) {
+                Output.error(`Interaction ${interaction.id} failed`, error);
+            });
         });
     }
 
@@ -47,29 +53,29 @@ export class Bot {
         return this.client.login(Settings.get(AvailableSettings.TOKEN));
     }
 
-    private handleInteraction(interaction: Interaction): void {
+    private async handleInteraction(interaction: Interaction): Promise<void> {
         if (interaction.isChatInputCommand()) {
-            this.handleCommand(interaction);
+            await this.handleCommand(interaction);
             return;
         }
 
         if (interaction.isButton()) {
-            this.handleButton(interaction);
+            await this.handleButton(interaction);
             return;
         }
 
         if (interaction.isAutocomplete()) {
-            this.handleAutocomplete(interaction);
+            await this.handleAutocomplete(interaction);
             return;
         }
 
         if (interaction.isModalSubmit()) {
-            this.handleModal(interaction);
+            await this.handleModal(interaction);
             return;
         }
     }
 
-    private handleAutocomplete(interaction: Interaction): void {
+    private async handleAutocomplete(interaction: Interaction): Promise<void> {
         if (!interaction.isAutocomplete()) {
             return;
         }
@@ -81,11 +87,11 @@ export class Bot {
 
         const handler = new handlerClass();
         if (handler.autocomplete) {
-            handler.autocomplete(interaction);
+            await handler.autocomplete(interaction);
         }
     }
 
-    private handleCommand(interaction: Interaction): void {
+    private async handleCommand(interaction: Interaction): Promise<void> {
         if (!interaction.isChatInputCommand()) {
             return;
         }
@@ -94,11 +100,11 @@ export class Bot {
 
         const handlerClass = commands.getCommandHandler(interaction.commandName);
         if (!handlerClass) {
-            interaction.reply('Oepsie woepsie, er is iets fout gegaan!');
+            await interaction.reply('Oepsie woepsie, er is iets fout gegaan!');
             return;
         }
 
-        new handlerClass().init(interaction, this.client).handle();
+        await new handlerClass().init(interaction, this.client).handle();
     }
 
     private async handleButton(interaction: Interaction): Promise<void> {
