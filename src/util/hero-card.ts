@@ -41,8 +41,6 @@ export class HeroCard {
     private static readonly FACT_VALUE_SIZE = 40;
     private static readonly FACT_GAP = 56;
 
-    // A swing tag hung off the right edge of the plate: a pointed left end, a punched
-    // hole and a string back to the plate.
     private static readonly TAG_SIZE = 34;
     private static readonly TAG_TRACKING = 4.4;
     private static readonly TAG_PAD_X = 34;
@@ -55,7 +53,6 @@ export class HeroCard {
     private static readonly ACCENT = '#F2C500';
     private static readonly INK = '#FFFFFF';
     private static readonly INK_DIM = '#8B929F';
-    // Read against the accent fill of the tag, not against the panel.
     private static readonly INK_INVERTED = '#12141A';
 
     public static render(data: HeroCardData): Buffer {
@@ -162,9 +159,6 @@ export class HeroCard {
         return SvgText.boldWidth(heading, size);
     }
 
-    // A filled pill in the top right corner, the one part of the canvas the title, the
-    // plate and the facts all leave empty. Drawn after the watermark so it sits on top
-    // of the logo rather than under it.
     private static buildTag(tag: string | null): string {
         const label = (tag ?? '').trim().toUpperCase();
         if (!label) {
@@ -176,7 +170,6 @@ export class HeroCard {
 
         const x = this.WIDTH - this.PAD_X - width;
 
-        // Centred on the eyebrow's cap height, so the tag and the brand read as one line.
         const middle = this.PAD_TOP + (this.EYEBROW_SIZE * this.CAP_HEIGHT_EM) / 2;
         const top = middle - this.TAG_HEIGHT / 2;
         const baseline = middle + (this.TAG_SIZE * this.CAP_HEIGHT_EM) / 2;

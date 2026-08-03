@@ -8,8 +8,6 @@ export class ForSaleBadge {
         return `Deze auto staat **te koop** — [${label}](${listing.url})`;
     }
 
-    // Drawn into the card itself, so it carries the price: the image travels on its own
-    // once it is screenshotted or forwarded, where the message text does not follow.
     public static tag(listing: ForSaleListing): string {
         if (listing.priceCents === null) {
             return 'TE KOOP';

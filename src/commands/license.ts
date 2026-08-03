@@ -76,9 +76,6 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
-        // Fired here rather than inside the Promise.all below because the guard it feeds
-        // needs the brand, which the RDW has not answered with yet. Awaiting it only
-        // after the card's own data is in keeps it off the critical path.
         const forSaleRequest = new Marktplaats().findCandidates(license);
 
         const [vehicleInfo, fuelInfo, sightings] = await Promise.all([

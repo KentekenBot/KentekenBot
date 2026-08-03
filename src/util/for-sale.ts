@@ -1,10 +1,8 @@
 import { ForSaleListing, MarketplaceCandidate } from '../types/marketplace.types';
 
 export class ForSale {
-    // An allowlist, because an unrecognised price type must not be assumed to be a sale.
     private static readonly SALE_PRICE_TYPES = ['FIXED', 'MIN_BID', 'SEE_DESCRIPTION', 'NOTK', 'ON_REQUEST'];
 
-    // Parts and scrap adverts quote the plate of their donor car.
     private static readonly PARTS_MARKERS = ['onderdel', 'sloop', 'donor', 'plaatwerk', 'motorblok'];
 
     public static verify(candidates: MarketplaceCandidate[], brand: string): ForSaleListing | null {
@@ -41,8 +39,6 @@ export class ForSale {
         return this.mentionsBrand(candidate, brand);
     }
 
-    // Title only: these words turn up innocently in descriptions ("geen onderdelen
-    // vervangen"), and a false negative only costs a badge.
     private static looksLikeParts(title: string): boolean {
         const haystack = title.toLowerCase();
 
@@ -67,9 +63,6 @@ export class ForSale {
             return true;
         }
 
-        // The RDW spells a brand out in full where an advert shortens it, so
-        // "MERCEDES-BENZ" has to match "Mercedes". The length floor keeps the leading
-        // word from matching an ordinary Dutch word.
         const leading = needle.split(/[-\s]/)[0];
 
         return leading.length >= 5 && haystack.includes(leading);
