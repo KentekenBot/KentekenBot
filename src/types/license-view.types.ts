@@ -3,7 +3,6 @@ import { VehicleInfo } from '../models/vehicle-info';
 import { FuelInfo } from '../models/fuel-info';
 import { BrandLogoResult } from './brand-logo.types';
 import { SightingsSummary } from './sighting.types';
-import { ForSaleListing } from './marketplace.types';
 
 export interface LicenseViewMessage {
     components: ContainerBuilder[];
@@ -16,7 +15,6 @@ export interface LicenseViewData {
     formattedLicense: string;
     vehicleType: string | null;
     badge: string | null;
-    forSale: ForSaleListing | null;
     comment: string | null;
     sightings: SightingsSummary | null;
     logo: BrandLogoResult;
