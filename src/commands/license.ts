@@ -76,12 +76,11 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
-        const forSaleRequest = new Marktplaats().findCandidates(license);
-
-        const [vehicleInfo, fuelInfo, sightings] = await Promise.all([
+        const [vehicleInfo, fuelInfo, sightings, forSaleCandidates] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
             Sightings.summary(license, this.interaction.guildId, this.interaction.user.id),
+            new Marktplaats().findCandidates(license),
         ]);
 
         if (!vehicleInfo) {
@@ -101,7 +100,7 @@ export class License extends BaseCommand implements ICommand {
 
         const isFirstModel = await this.isFirstModel(vehicleInfo, recorded.sightingId);
 
-        const forSale = ForSale.verify(await forSaleRequest, vehicleInfo.merk);
+        const forSale = ForSale.verify(forSaleCandidates, vehicleInfo.merk);
 
         const { components, files } = LicenseView.build({
             vehicleInfo,
