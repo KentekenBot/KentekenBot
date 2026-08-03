@@ -19,6 +19,7 @@ function cardData(overrides: Partial<HeroCardData> = {}): HeroCardData {
             { label: 'Vermogen', value: '95 pk' },
             { label: 'Bouwjaar', value: '2020' },
         ],
+        tag: null,
         ...overrides,
     };
 }
@@ -54,6 +55,27 @@ describe('HeroCard.render', () => {
         const card = HeroCard.render(cardData({ brand: '', model: '', facts: [] }));
 
         expect(card.subarray(0, 8)).toEqual(PNG_MAGIC);
+    });
+
+    it('draws the tag without changing the canvas', () => {
+        const plain = HeroCard.render(cardData());
+        const tagged = HeroCard.render(cardData({ tag: 'TE KOOP · € 8.750' }));
+
+        expect(dimensions(tagged)).toEqual(dimensions(plain));
+        expect(tagged.length).toBeGreaterThan(plain.length);
+    });
+
+    it('leaves the card untouched when the tag is blank', () => {
+        const plain = HeroCard.render(cardData());
+
+        expect(HeroCard.render(cardData({ tag: '   ' }))).toEqual(plain);
+    });
+
+    it('widens the tag to fit a longer label', () => {
+        const short = HeroCard.render(cardData({ tag: 'TE KOOP' })).length;
+        const long = HeroCard.render(cardData({ tag: 'TE KOOP · € 129.950' })).length;
+
+        expect(long).toBeGreaterThan(short);
     });
 
     it('draws more ink for a longer model name', () => {

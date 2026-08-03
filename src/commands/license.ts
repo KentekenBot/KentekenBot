@@ -20,6 +20,8 @@ import { FirstSpotBadge } from '../util/first-spot-badge';
 import { LicenseView } from '../util/license-view';
 import { BrandLogo } from '../util/brand-logo';
 import { Output } from '../services/output';
+import { Marktplaats } from '../services/marktplaats';
+import { ForSale } from '../util/for-sale';
 
 interface RecordedSpot {
     vehicleId: number | null;
@@ -74,6 +76,11 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
+        // Fired here rather than inside the Promise.all below because the guard it feeds
+        // needs the brand, which the RDW has not answered with yet. Awaiting it only
+        // after the card's own data is in keeps it off the critical path.
+        const forSaleRequest = new Marktplaats().findCandidates(license);
+
         const [vehicleInfo, fuelInfo, sightings] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
@@ -97,12 +104,15 @@ export class License extends BaseCommand implements ICommand {
 
         const isFirstModel = await this.isFirstModel(vehicleInfo, recorded.sightingId);
 
+        const forSale = ForSale.verify(await forSaleRequest, vehicleInfo.merk);
+
         const { components, files } = LicenseView.build({
             vehicleInfo,
             fuelInfo,
             formattedLicense: LicenseUtil.format(license),
             vehicleType: LicenseUtil.getVehicleType(license),
             badge: isFirstModel ? FirstSpotBadge.message(vehicleInfo.merk, vehicleInfo.handelsbenaming) : null,
+            forSale,
             comment: this.getComment(),
             sightings,
             logo: await BrandLogo.resolve(vehicleInfo.merk),
