@@ -20,6 +20,8 @@ import { FirstSpotBadge } from '../util/first-spot-badge';
 import { LicenseView } from '../util/license-view';
 import { BrandLogo } from '../util/brand-logo';
 import { Output } from '../services/output';
+import { Marktplaats } from '../services/marktplaats';
+import { ForSale } from '../util/for-sale';
 
 interface RecordedSpot {
     vehicleId: number | null;
@@ -74,10 +76,11 @@ export class License extends BaseCommand implements ICommand {
             return;
         }
 
-        const [vehicleInfo, fuelInfo, sightings] = await Promise.all([
+        const [vehicleInfo, fuelInfo, sightings, forSaleCandidates] = await Promise.all([
             VehicleInfo.get(license),
             FuelInfo.get(license),
             Sightings.summary(license, this.interaction.guildId, this.interaction.user.id),
+            new Marktplaats().findCandidates(license),
         ]);
 
         if (!vehicleInfo) {
@@ -97,12 +100,15 @@ export class License extends BaseCommand implements ICommand {
 
         const isFirstModel = await this.isFirstModel(vehicleInfo, recorded.sightingId);
 
+        const forSale = ForSale.verify(forSaleCandidates, vehicleInfo.merk);
+
         const { components, files } = LicenseView.build({
             vehicleInfo,
             fuelInfo,
             formattedLicense: LicenseUtil.format(license),
             vehicleType: LicenseUtil.getVehicleType(license),
             badge: isFirstModel ? FirstSpotBadge.message(vehicleInfo.merk, vehicleInfo.handelsbenaming) : null,
+            forSale,
             comment: this.getComment(),
             sightings,
             logo: await BrandLogo.resolve(vehicleInfo.merk),

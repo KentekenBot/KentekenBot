@@ -1,5 +1,6 @@
 import { DutchPlate } from './dutch-plate';
 import { SvgRenderer } from './svg-renderer';
+import { SvgText } from './svg-text';
 import { HeroCardData, HeroCardFact } from '../types/hero-card.types';
 
 // One image carrying everything visual about the vehicle: the brand and model in
@@ -23,7 +24,6 @@ export class HeroCard {
     private static readonly PAD_TOP = 96;
     private static readonly PAD_BOTTOM = 84;
 
-    private static readonly FONT = SvgRenderer.TEXT_FONT_FAMILY;
     private static readonly CAP_HEIGHT_EM = 0.73;
 
     private static readonly EYEBROW_SIZE = 30;
@@ -41,6 +41,11 @@ export class HeroCard {
     private static readonly FACT_VALUE_SIZE = 40;
     private static readonly FACT_GAP = 56;
 
+    private static readonly TAG_SIZE = 34;
+    private static readonly TAG_TRACKING = 4.4;
+    private static readonly TAG_PAD_X = 34;
+    private static readonly TAG_HEIGHT = 64;
+
     private static readonly LOGO_SIZE = 700;
     private static readonly LOGO_BLEED = 90;
     private static readonly LOGO_OPACITY = 0.16;
@@ -48,6 +53,7 @@ export class HeroCard {
     private static readonly ACCENT = '#F2C500';
     private static readonly INK = '#FFFFFF';
     private static readonly INK_DIM = '#8B929F';
+    private static readonly INK_INVERTED = '#12141A';
 
     public static render(data: HeroCardData): Buffer {
         const svg = [
@@ -56,6 +62,7 @@ export class HeroCard {
             `<rect width="${this.WIDTH}" height="${this.HEIGHT}" fill="url(#ground)"/>`,
             this.buildWatermark(data.logo),
             this.buildTitle(data.brand, data.model),
+            this.buildTag(data.tag),
             this.buildPlate(data.formattedLicense),
             this.buildFacts(data.facts),
             '</svg>',
@@ -106,11 +113,10 @@ export class HeroCard {
         if (eyebrow && model.trim()) {
             const baseline = this.PAD_TOP + this.EYEBROW_SIZE * this.CAP_HEIGHT_EM;
             parts.push(
-                `<text x="${this.PAD_X}" y="${baseline}" font-family="${this.FONT}" font-size="${
-                    this.EYEBROW_SIZE
-                }" font-weight="bold" letter-spacing="${this.EYEBROW_TRACKING}" fill="${
-                    this.ACCENT
-                }">${SvgRenderer.escape(eyebrow)}</text>`
+                `<text x="${this.PAD_X}" y="${baseline}" ${SvgText.bold(
+                    this.EYEBROW_SIZE,
+                    this.EYEBROW_TRACKING
+                )} fill="${this.ACCENT}">${SvgRenderer.escape(eyebrow)}</text>`
             );
         }
 
@@ -118,9 +124,9 @@ export class HeroCard {
             const fitted = this.fitHeading(heading);
             const baseline = this.MODEL_CAP_TOP + fitted.size * this.CAP_HEIGHT_EM;
             parts.push(
-                `<text x="${this.PAD_X}" y="${baseline}" font-family="${this.FONT}" font-size="${
-                    fitted.size
-                }" font-weight="bold" fill="${this.INK}">${SvgRenderer.escape(fitted.text)}</text>`
+                `<text x="${this.PAD_X}" y="${baseline}" ${SvgText.bold(fitted.size)} fill="${
+                    this.INK
+                }">${SvgRenderer.escape(fitted.text)}</text>`
             );
         }
 
@@ -150,10 +156,32 @@ export class HeroCard {
     }
 
     private static headingWidth(heading: string, size: number): number {
-        return SvgRenderer.measureTextWidth(
-            heading,
-            `font-family="${this.FONT}" font-size="${size}" font-weight="bold"`
-        );
+        return SvgText.boldWidth(heading, size);
+    }
+
+    private static buildTag(tag: string | null): string {
+        const label = (tag ?? '').trim().toUpperCase();
+        if (!label) {
+            return '';
+        }
+
+        const attributes = SvgText.bold(this.TAG_SIZE, this.TAG_TRACKING);
+        const width = SvgText.boldWidth(label, this.TAG_SIZE, this.TAG_TRACKING) + this.TAG_PAD_X * 2;
+
+        const x = this.WIDTH - this.PAD_X - width;
+
+        const middle = this.PAD_TOP + (this.EYEBROW_SIZE * this.CAP_HEIGHT_EM) / 2;
+        const top = middle - this.TAG_HEIGHT / 2;
+        const baseline = middle + (this.TAG_SIZE * this.CAP_HEIGHT_EM) / 2;
+
+        return [
+            `<rect x="${x}" y="${top}" width="${width}" height="${this.TAG_HEIGHT}" rx="${this.TAG_HEIGHT / 2}" fill="${
+                this.ACCENT
+            }"/>`,
+            `<text x="${x + this.TAG_PAD_X}" y="${baseline}" ${attributes} fill="${
+                this.INK_INVERTED
+            }">${SvgRenderer.escape(label)}</text>`,
+        ].join('');
     }
 
     private static buildPlate(formattedLicense: string): string {
@@ -169,8 +197,8 @@ export class HeroCard {
             return '';
         }
 
-        const labelAttributes = `font-family="${this.FONT}" font-size="${this.FACT_LABEL_SIZE}" font-weight="bold" letter-spacing="${this.FACT_LABEL_TRACKING}"`;
-        const valueAttributes = `font-family="${this.FONT}" font-size="${this.FACT_VALUE_SIZE}" font-weight="bold"`;
+        const labelAttributes = SvgText.bold(this.FACT_LABEL_SIZE, this.FACT_LABEL_TRACKING);
+        const valueAttributes = SvgText.bold(this.FACT_VALUE_SIZE);
 
         const columns: { fact: HeroCardFact; label: string; width: number }[] = [];
         for (const fact of facts) {

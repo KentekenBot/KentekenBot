@@ -98,6 +98,7 @@ function viewData(overrides: Partial<LicenseViewData> = {}): LicenseViewData {
         formattedLicense: 'X-897-PL',
         vehicleType: null,
         badge: null,
+        forSale: null,
         comment: null,
         sightings: null,
         logo: { image: LOGO },
@@ -269,6 +270,23 @@ describe('LicenseView.build', () => {
 
         expect(contents).toContain('🥇 Je bent de eerste!');
         expect(contents).toContain('💬 _mooie kar_');
+    });
+
+    it('renders the for-sale note above the first-spot badge', () => {
+        const data = viewData({
+            badge: 'Je bent de eerste!',
+            forSale: {
+                title: 'Ford Ka 1.2 69pk 2012 Wit',
+                url: 'https://www.marktplaats.nl/v/auto-s/ford/m1-ford-ka',
+                priceCents: 290000,
+            },
+        });
+
+        const contents = textContents(LicenseView.build(data, NOW).components);
+
+        expect(contents).toContain('🏷️ Deze auto staat **te koop**');
+        expect(contents).toContain('(https://www.marktplaats.nl/v/auto-s/ford/m1-ford-ka)');
+        expect(contents.indexOf('🏷️')).toBeLessThan(contents.indexOf('🥇'));
     });
 
     it('uses an accent colour based on the primary fuel type', () => {

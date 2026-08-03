@@ -9,4 +9,5 @@ export interface HeroCardData {
     formattedLicense: string;
     logo: Buffer;
     facts: HeroCardFact[];
+    tag: string | null;
 }
