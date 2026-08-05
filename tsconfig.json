@@ -8,6 +8,7 @@
     "sourceMap": false,
     "outDir": "dist",
     "strict": true,
+    "types": ["node", "jest"],
   },
   "exclude": [
     "tests",
