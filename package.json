@@ -15,6 +15,9 @@
   },
   "author": "Kefkef123",
   "license": "ISC",
+  "overrides": {
+    "uuid": "^11.1.1"
+  },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "axios": "^1.19.0",
