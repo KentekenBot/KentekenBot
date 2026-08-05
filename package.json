@@ -10,7 +10,7 @@
     "test": "cross-env NODE_ICU_DATA=node_modules/full-icu jest",
     "lint": "eslint ./src --max-warnings=0",
     "lint:fix": "eslint ./src --max-warnings=0 --fix",
-    "prepare": "husky install",
+    "prepare": "husky",
     "migrate": "sequelize-cli db:migrate"
   },
   "author": "Kefkef123",
@@ -42,7 +42,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",
     "full-icu": "^1.6.0",
-    "husky": "^8.0.3",
+    "husky": "^9.1.7",
     "jest": "^30.4.2",
     "lint-staged": "^12.5.0",
     "nodemon": "^3.1.14",
