@@ -44,7 +44,7 @@
     "full-icu": "^1.6.0",
     "husky": "^9.1.7",
     "jest": "^30.4.2",
-    "lint-staged": "^12.5.0",
+    "lint-staged": "^17.3.0",
     "nodemon": "^3.1.14",
     "prettier": "3.9.6",
     "ts-node": "^10.9.2",
