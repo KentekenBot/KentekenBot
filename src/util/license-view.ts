@@ -130,7 +130,7 @@ export class LicenseView {
     }
 
     private static modelName(data: LicenseViewData): string {
-        const model = data.vehicleInfo.handelsbenaming.trim();
+        const model = data.vehicleInfo.handelsbenaming;
 
         return model ? Str.toTitleCase(model) : '';
     }
