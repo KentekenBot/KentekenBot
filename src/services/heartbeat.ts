@@ -1,7 +1,10 @@
 import { get } from 'https';
 
 export class Heartbeat {
-    public constructor(private endpoint: string, intervalInMs: number) {
+    public constructor(
+        private endpoint: string,
+        intervalInMs: number
+    ) {
         this.beat();
         setInterval(this.beat.bind(this), intervalInMs);
     }
