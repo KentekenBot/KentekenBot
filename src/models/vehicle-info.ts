@@ -47,7 +47,7 @@ export class VehicleInfo extends BaseModel {
         super();
         this.hydrate(data);
 
-        this.handelsbenaming = this.handelsbenaming.replace(this.merk, '');
+        this.handelsbenaming = this.handelsbenaming.replace(this.merk, '').trim();
     }
 
     public static async get(license: string): Promise<VehicleInfo | null> {
