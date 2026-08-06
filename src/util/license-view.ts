@@ -22,7 +22,6 @@ import { SightingsSummary } from '../types/sighting.types';
 import { Str } from './str';
 import { DateTime } from './date-time';
 import { formatCurrency } from './format-currency';
-import { ForSaleBadge } from './for-sale-badge';
 import { DiscordTimestamps } from '../enums/discord-timestamps';
 
 export class LicenseView {
@@ -50,9 +49,6 @@ export class LicenseView {
         }
 
         const notes: string[] = [];
-        if (data.forSale) {
-            notes.push(`🏷️ ${ForSaleBadge.message(data.forSale)}`);
-        }
         if (data.badge) {
             notes.push(`🥇 ${data.badge}`);
         }
@@ -81,7 +77,6 @@ export class LicenseView {
             formattedLicense: data.formattedLicense,
             logo: data.logo.image,
             facts: this.buildFacts(data, now),
-            tag: data.forSale ? ForSaleBadge.tag(data.forSale) : null,
         });
 
         return { components: [container], files: [new AttachmentBuilder(hero, { name: fileName })] };
