@@ -140,7 +140,7 @@ describe('LicenseView.build', () => {
         expect(gallery(LicenseView.build(viewData(), NOW).components)).not.toContain('description');
     });
 
-    it('renders the specs the card does not carry, without emoji or date pills', () => {
+    it('renders the specs the card does not carry, without emoji', () => {
         const contents = textContents(LicenseView.build(viewData({ vehicleType: 'Personenauto' }), NOW).components);
 
         // Intl puts a non-breaking space after the euro sign.
@@ -148,8 +148,15 @@ describe('LicenseView.build', () => {
         expect(contents).not.toContain('⛽');
         expect(contents).not.toContain('🎨');
         expect(contents).not.toContain('💵');
-        expect(contents).not.toContain('🗓️');
-        expect(contents).not.toMatch(/<t:\d+:d>/);
+    });
+
+    it('spells the construction and apk date out as timestamps', () => {
+        const contents = textContents(LicenseView.build(viewData(), NOW).components);
+
+        const construction = Math.round(new Date(2024, 0, 19).getTime() / 1000);
+        const expiry = Math.round(new Date('2028-01-19T00:00:00.000').getTime() / 1000);
+
+        expect(contents).toContain(`🗓️ <t:${construction}:D> · 🔧 APK tot <t:${expiry}:D>`);
     });
 
     it('skips missing fields instead of showing placeholders', () => {
@@ -181,15 +188,19 @@ describe('LicenseView.build', () => {
         expect(textContents(LicenseView.build(data, NOW).components)).toContain('**Benzine + Elektriciteit**');
     });
 
-    it('only mentions the apk in text when it needs attention', () => {
+    it('only warns about the apk when it needs attention', () => {
         const healthy = textContents(LicenseView.build(viewData(), NOW).components);
-        expect(healthy).not.toContain('APK');
+        expect(healthy).not.toContain('⚠️ APK');
 
         const expired = viewData({ vehicleInfo: vehicleInfo({ vervaldatum_apk_dt: '2025-01-19T00:00:00.000' }) });
-        expect(textContents(LicenseView.build(expired, NOW).components)).toContain('⚠️ APK verlopen');
+        const expiredContents = textContents(LicenseView.build(expired, NOW).components);
+        expect(expiredContents).toContain('⚠️ APK verlopen');
+        expect(expiredContents).not.toContain('APK tot');
 
         const expiring = viewData({ vehicleInfo: vehicleInfo({ vervaldatum_apk_dt: '2026-08-01T00:00:00.000' }) });
-        expect(textContents(LicenseView.build(expiring, NOW).components)).toContain('⚠️ APK verloopt');
+        const expiringContents = textContents(LicenseView.build(expiring, NOW).components);
+        expect(expiringContents).toContain('⚠️ APK verloopt');
+        expect(expiringContents).not.toContain('APK tot');
     });
 
     it('shows status flags only when applicable', () => {
