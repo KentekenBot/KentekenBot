@@ -140,7 +140,7 @@ describe('LicenseView.build', () => {
         expect(gallery(LicenseView.build(viewData(), NOW).components)).not.toContain('description');
     });
 
-    it('renders the specs the card does not carry, without emoji', () => {
+    it('renders the specs the card does not carry', () => {
         const contents = textContents(LicenseView.build(viewData({ vehicleType: 'Personenauto' }), NOW).components);
 
         // Intl puts a non-breaking space after the euro sign.
@@ -150,13 +150,13 @@ describe('LicenseView.build', () => {
         expect(contents).not.toContain('💵');
     });
 
-    it('spells the construction and apk date out as timestamps', () => {
+    it('spells the construction and apk date out as timestamps on the specs row', () => {
         const contents = textContents(LicenseView.build(viewData(), NOW).components);
 
         const construction = Math.round(new Date(2024, 0, 19).getTime() / 1000);
         const expiry = Math.round(new Date('2028-01-19T00:00:00.000').getTime() / 1000);
 
-        expect(contents).toContain(`🗓️ <t:${construction}:D> · 🔧 APK tot <t:${expiry}:D>`);
+        expect(contents).toContain(`27.247 · 🗓️ <t:${construction}:D> · 🔧 APK tot <t:${expiry}:D>`);
     });
 
     it('skips missing fields instead of showing placeholders', () => {

@@ -38,14 +38,9 @@ export class LicenseView {
         const fileName = this.buildFileName(data);
         this.addHero(container, fileName);
 
-        const specs = this.buildSpecs(data);
+        const specs = this.buildSpecs(data, now);
         if (specs) {
             container.addTextDisplayComponents(new TextDisplayBuilder().setContent(specs));
-        }
-
-        const dates = this.buildDates(data.vehicleInfo, now);
-        if (dates) {
-            container.addTextDisplayComponents(new TextDisplayBuilder().setContent(dates));
         }
 
         const flags = this.buildFlags(data.vehicleInfo, now);
@@ -211,9 +206,9 @@ export class LicenseView {
     }
 
     // Power, construction year and apk expiry are set in the hero card, so the text
-    // carries what the image does not: the colour, the fuel and the price. No emoji
-    // and no timestamp pills, which is what made the old block look pasted together.
-    private static buildSpecs(data: LicenseViewData): string | null {
+    // carries what the image does not: the colour, the fuel, the price and the full
+    // dates the card only has room to abbreviate.
+    private static buildSpecs(data: LicenseViewData, now: number): string | null {
         const vehicleInfo = data.vehicleInfo;
         const parts: string[] = [];
 
@@ -241,12 +236,6 @@ export class LicenseView {
             parts.push(formatCurrency(price));
         }
 
-        return parts.length > 0 ? parts.join(' · ') : null;
-    }
-
-    private static buildDates(vehicleInfo: VehicleInfo, now: number): string | null {
-        const parts: string[] = [];
-
         const construction = vehicleInfo.getConstructionDateTimestamp();
         if (!isNaN(construction)) {
             parts.push(`🗓️ ${DateTime.getDiscordTimestamp(construction, DiscordTimestamps.LONG_DATE)}`);
@@ -257,7 +246,7 @@ export class LicenseView {
             parts.push(`🔧 APK tot ${DateTime.getDiscordTimestamp(expiry, DiscordTimestamps.LONG_DATE)}`);
         }
 
-        return parts.length > 0 ? `-# ${parts.join(' · ')}` : null;
+        return parts.length > 0 ? parts.join(' · ') : null;
     }
 
     // The headline numbers, drawn into the card beside the plate.
